@@ -11,119 +11,68 @@
   --bg: #050a05;
   --glitch-red: #ff0033;
 }
-
 body {
-  background: #000;
-  color: var(--neon);
-  font-family: 'Courier New', monospace;
-  margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  overflow: hidden;
-  text-transform: uppercase;
+  background:#000; color:var(--neon);
+  font-family:'Courier New',monospace;
+  margin:0; display:flex; justify-content:center; align-items:center;
+  height:100vh; overflow:hidden; text-transform:uppercase;
 }
-
-/* CRT SCANLINE OVERLAY */
-body::before {
-  content: " ";
-  display: block;
-  position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), 
-              linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-  z-index: 10;
-  background-size: 100% 3px, 3px 100%;
-  pointer-events: none;
+body::before{
+  content:""; position:absolute; inset:0;
+  background:
+   linear-gradient(rgba(18,16,16,0)50%,rgba(0,0,0,.15)50%),
+   linear-gradient(90deg,rgba(255,0,0,.03),rgba(0,255,0,.01),rgba(0,0,255,.03));
+  background-size:100% 3px,3px 100%;
+  pointer-events:none; z-index:10;
 }
-
-#app {
-  width: 100%;
-  max-width: 440px;
-  background: var(--bg);
-  padding: 15px;
-  border: 4px solid #222;
-  box-shadow: 0 0 30px rgba(0,255,0,0.2);
-  position: relative;
-  z-index: 5;
-  text-align: center;
+#app{
+  width:100%; max-width:440px;
+  background:var(--bg);
+  padding:15px; border:4px solid #222;
+  box-shadow:0 0 30px rgba(0,255,0,.2);
+  position:relative; z-index:5; text-align:center;
 }
-
-#timeBarBox {
-  width: 100%;
-  height: 14px;
-  background: #001100;
-  border: 2px solid var(--neon);
-  margin-bottom: 12px;
+#timeBarBox{
+  width:100%; height:14px;
+  background:#001100; border:2px solid var(--neon);
+  margin-bottom:12px;
 }
-
-#timeBar {
-  height: 100%;
-  width: 100%;
-  background: var(--neon);
-  transition: width 0.05s linear;
+#timeBar{
+  height:100%; width:100%; background:var(--neon);
+  transition:width .05s linear;
 }
-
-#screen {
-  border: 2px solid #113311;
-  background: #000;
-  padding: 20px;
-  min-height: 240px;
-  font-size: 20px;
-  margin-bottom: 12px;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+#screen{
+  border:2px solid #113311; background:#000;
+  padding:20px; min-height:240px;
+  font-size:20px; margin-bottom:12px;
+  display:flex; flex-direction:column;
+  justify-content:center; align-items:center;
 }
-
-/* THE PETIT BEURRE BOSS RENDER */
-.amos-sprite {
-  width: 140px;
-  height: auto;
-  image-rendering: pixelated; /* THE 8-BIT LOOK */
-  border: 2px solid var(--neon);
-  margin: 10px 0;
-  filter: contrast(1.4) grayscale(1) sepia(1) hue-rotate(60deg) brightness(1.1);
-  box-shadow: 0 0 15px var(--neon);
+.amos-sprite{
+  width:140px; image-rendering:pixelated;
+  border:2px solid var(--neon); margin:10px 0;
+  filter:contrast(1.4) grayscale(1) sepia(1) hue-rotate(60deg);
+  box-shadow:0 0 15px var(--neon);
 }
-
-.btn {
-  display: block;
-  width: 100%;
-  margin: 8px 0;
-  padding: 16px;
-  background: #1a331a;
-  color: var(--neon);
-  border: none;
-  border-bottom: 5px solid #0a1a0a;
-  border-radius: 4px;
-  font-size: 18px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.05s;
+.btn{
+  display:block; width:100%; margin:8px 0;
+  padding:16px; background:#1a331a; color:var(--neon);
+  border:none; border-bottom:5px solid #0a1a0a;
+  border-radius:4px; font-size:18px; font-weight:bold;
 }
+.btn:active{ transform:translateY(3px); border-bottom:1px solid #0a1a0a; }
 
-.btn:active {
-  transform: translateY(3px);
-  border-bottom: 1px solid #0a1a0a;
-}
-
-/* ANIMATIONS */
-.sprite { font-size: 50px; margin-bottom: 10px; }
-.bounce { animation: bounce 0.5s infinite alternate; }
-@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
-.spin { animation: spin 1s infinite linear; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.shake { animation: shake 0.2s infinite; }
-@keyframes shake { 0%, 100% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, -2px); } }
-.flash-yellow { animation: f-yellow 0.1s 3; }
-@keyframes f-yellow { 0%, 100% { background: #000; } 50% { background: #aa8800; } }
-.flash-red { animation: f-red 0.3s infinite; }
-@keyframes f-red { 0% { color: #ff0000; } 100% { color: #fff; } }
+.sprite{font-size:50px;margin-bottom:10px;}
+.bounce{animation:bounce .5s infinite alternate;}
+@keyframes bounce{to{transform:translateY(-15px);}}
+.spin{animation:spin 1s infinite linear;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.shake{animation:shake .2s infinite;}
+@keyframes shake{50%{transform:translate(-2px,-2px);}}
+.flash-yellow{animation:f-yellow .1s 3;}
+@keyframes f-yellow{50%{background:#aa8800;}}
+.flash-red{animation:f-red .3s infinite;}
+@keyframes f-red{0%{color:#ff0000;}100%{color:#fff;}}
 </style>
 </head>
 
@@ -136,169 +85,241 @@ body::before {
 </div>
 
 <script>
-let stage=0, round=1, balbalot=false, barTimer, barWidth=100, barSpeed=3;
-let playerMove, cpuMove, suddenActive=false, lockInput=false;
+// ===== CORE STATE MACHINE =====
+let stage=0;        // 0 challenge →1 accept →2 chant →3 arena →4 teko button → loop
+let round=1;        // 2 תיקו → בלבלות
+let balbalot=false;
+let lock=false;
 
-// AUDIO ENGINE
-let audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+let barTimer=null, barWidth=100;
+let suddenToken=0;   // ANTI RACE CONDITION
+
+// ===== AUDIO =====
+let audioCtx=new (window.AudioContext||webkitAudioContext)();
 let musicInterval;
-const ACTION_BASS = [164.81, 164.81, 196.00, 220.00];
+const BASS=[164.81,164.81,196,220];
 
-function beep(f,ms=120,type="square"){
-  let o=audioCtx.createOscillator(), g=audioCtx.createGain();
-  o.type=type; o.frequency.value=f;
-  g.gain.setValueAtTime(0.1, audioCtx.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+ms/1000);
-  o.connect(g); g.connect(audioCtx.destination);
-  o.start(); o.stop(audioCtx.currentTime+ms/1000);
+function beep(f,ms=120,t="square"){
+ let o=audioCtx.createOscillator(),g=audioCtx.createGain();
+ o.type=t; o.frequency.value=f;
+ g.gain.setValueAtTime(.12,audioCtx.currentTime);
+ g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+ms/1000);
+ o.connect(g); g.connect(audioCtx.destination);
+ o.start(); o.stop(audioCtx.currentTime+ms/1000);
 }
-
 function startMusic(){
-  stopMusic(); let i=0;
-  musicInterval=setInterval(()=>{
-    beep(ACTION_BASS[i%4], 200, "sawtooth");
-    if(i%2===0) beep(60, 50, "triangle");
-    i++;
-  }, 250 - (round*8));
+ stopMusic(); let i=0;
+ musicInterval=setInterval(()=>{
+   beep(BASS[i%4],180,"sawtooth");
+   if(!(i%2)) beep(60,40,"triangle");
+   i++;
+ },240-Math.min(round*10,90));
 }
-function stopMusic(){ clearInterval(musicInterval); }
+function stopMusic(){clearInterval(musicInterval);}
 
-function show(html){ document.getElementById("screen").innerHTML = html; }
+// ===== UI =====
+const $=id=>document.getElementById(id);
+function show(h){$("screen").innerHTML=h;}
 
-function renderButtons(list){
- if(lockInput) return;
- let h="";
- list.forEach(b=>{ h+=`<button class='btn' onclick="handle('${b.t}',${b.ok})">${b.t}</button>`; });
- document.getElementById("buttons").innerHTML=h;
+function buttons(arr){
+ if(lock) return;
+ $("buttons").innerHTML=arr.map(b=>
+  `<button class='btn' onclick="press('${b.t}',${b.ok})">${b.t}</button>`
+ ).join("");
 }
 
 function startBar(){
  clearInterval(barTimer); barWidth=100;
  barTimer=setInterval(()=>{
-  barWidth-=barSpeed;
-  document.getElementById("timeBar").style.width=barWidth+"%";
-  if(barWidth<=0) korban("TOO SLOW");
+  barWidth-=3; $("timeBar").style.width=barWidth+"%";
+  if(barWidth<=0) korban("איטי מדי");
  },120);
 }
+function stopBar(){clearInterval(barTimer);}
 
+// ===== TABLES =====
+const ARENA={ "בונגלו":"אוניה","פיירבול":"בונגלו","צונמי":"פיירבול","אוניה":"צונמי" };
+const BAL  ={ "לונגבו":"אוווניה","פיירדד":"לונגבו","נוצמי":"פיירדד","אוווניה":"נוצמי" };
+
+const WORDS={
+ normal:{
+  challenge:"מגה קרב",
+  accept:"סופר קרב",
+  chant:"מגה מגה מגה קרב"
+ },
+ bal:{
+  challenge:"מגה חרב",
+  accept:"סופר חרב",
+  chant:"מגה מגה מגה חרב"
+ }
+};
+
+const DECOY={
+ "מגה קרב":["מגה קראב","מגע קרב","מגה קרבה"],
+ "סופר קרב":["סופר קראב","סופ קרב","סופר כרב"],
+ "מגה מגה מגה קרב":["מגה מגה קרב","מגה מגה מגה קראב"],
+ "פטיבר עמוס":["פטיבר אמוס","פטיבר עמוש"]
+};
+
+function decoys(w){
+ let d=[...(DECOY[w]||[])];
+ while(d.length<3) d.push(w+Math.random().toString(36).slice(2,4));
+ return [...new Set(d)].slice(0,3);
+}
+
+// ===== ENDINGS =====
 function korban(r){
- stopBar(); stopMusic(); lockInput=true;
- beep(80, 500, "sawtooth");
+ stopBar(); stopMusic(); lock=true;
+ beep(80,500,"sawtooth");
  show(`<span class="sprite spin">💀</span><br>KORBAN!!<br>${r}`);
- setTimeout(()=>renderButtons([{t:"NEW GAME",ok:true}]), 1000);
+ setTimeout(()=>buttons([{t:"NEW GAME",ok:true}]),1000);
  stage=-1;
 }
-
 function win(){
- stopBar(); stopMusic(); lockInput=true;
- [523, 659, 784].forEach((f,i)=>setTimeout(()=>beep(f,150), i*100));
- show(`<span class="sprite bounce">👍</span><br>YOU WIN!<br>COMPUTER LOSE`);
- setTimeout(()=>renderButtons([{t:"DRINK & RESTART",ok:true}]), 1200);
+ stopBar(); stopMusic(); lock=true;
+ [523,659,784].forEach((f,i)=>setTimeout(()=>beep(f,150),i*100));
+ show(`<span class="sprite bounce">👍</span><br>YOU WIN`);
+ setTimeout(()=>buttons([{t:"DRINK & RESTART",ok:true}]),1200);
  stage=-1;
 }
-
 function lose(){
- stopBar(); stopMusic(); lockInput=true;
- [200, 150, 100].forEach((f,i)=>setTimeout(()=>beep(f,200), i*150));
- show(`<span class="sprite shake">🍺</span><br>MAFSIDAN!<br>DRINK BEER`);
- setTimeout(()=>renderButtons([{t:"RETRY",ok:true}]), 1200);
+ stopBar(); stopMusic(); lock=true;
+ [200,150,100].forEach((f,i)=>setTimeout(()=>beep(f,200),i*150));
+ show(`<span class="sprite shake">🍺</span><br>MAFSIDAN`);
+ setTimeout(()=>buttons([{t:"RETRY",ok:true}]),1200);
  stage=-1;
 }
 
-const ARENA={"בונגלו":"אוניה","פיירבול":"בונגלו","צונמי":"פיירבול","אוניה":"צונמי"};
-const BAL={"לונגבו":"אוווניה","פיירדד":"לונגבו","נוצמי":"פיירדד","אוווניה":"נוצמי"};
-const DECOY_BANK={"מגה קרב":["מגה קראב","מגע קרב","מגה קרבה"],"סופר קרב":["סופר קראב","סופ קרב","סופר כרב"],"תיקו תיקו":["טיקו תיקו","תיקו תיק","טיקו טיקו"],"פטיבר עמוס":["פטיבר אמוס","פטיבר עמוש","פתיבר עמוס"]};
+// ===== INPUT =====
+function press(t,ok){
+ if(stage===-1){start();return;}
+ if(!ok){korban("טעות דיבור");return;}
 
-function getDecoys(w){
-  let d=[...(DECOY_BANK[w]||[])];
-  while(d.length<3) d.push(w+Math.random().toString(36).slice(2,4));
-  return [...new Set(d)].slice(0,3);
-}
-
-function handle(text,ok){
- if(stage===-1){ start(); return; }
- if(!ok){ korban("WRONG INPUT"); return; }
- 
- if(stage===100){ 
-   if(!suddenActive) return;
-   suddenActive=false; win(); return; 
+ // SUDDEN DEATH SAFE
+ if(stage===100){
+   let my=suddenToken;
+   suddenToken=0;
+   win();
+   return;
  }
 
- if(stage===30){
-  stopBar(); lockInput=true; playerMove=text;
-  let opts=balbalot?Object.keys(BAL):Object.keys(ARENA);
-  cpuMove=opts[Math.floor(Math.random()*opts.length)];
-  show(`YOU: ${playerMove}<br>CPU: <span class="shake">...</span>`);
-  setTimeout(()=>{
-    show(`YOU: ${playerMove}<br>CPU: ${cpuMove}`);
-    setTimeout(resolve, 1000);
-  }, 800);
-  return;
- }
  next();
 }
 
+// ===== FLOW =====
 function next(){
- lockInput=false;
- if(stage===0){
-  let w=balbalot?"מגה חרב":"מגה קרב";
-  show(`PHASE 1<br>${w}`);
-  renderButtons([{t:w,ok:true}, ...getDecoys(w).map(x=>({t:x,ok:false}))]);
-  startBar(); stage=1;
- } else if(stage===1){
-  let w=balbalot?"סופר חרב":"סופר קרב";
-  show(`PHASE 2<br>${w}`);
-  renderButtons([{t:w,ok:true}, ...getDecoys(w).map(x=>({t:x,ok:false}))]);
-  startBar(); stage=2;
- } else if(stage===2){
-  enterArena();
- } else if(stage===99){
-  // SUDDEN DEATH BOSS REVEAL
-  const amosUrl = "https://img.mako.co.il/2016/05/26/petiber_i.jpg";
-  show(`
-    <div class="shake flash-red">!!! SUDDEN DEATH !!!</div>
-    <img src="${amosUrl}" class="amos-sprite">
-    <div class="flash">פטיבר עמוס</div>
-  `);
-  suddenActive=true;
-  let cpuTime = 420 + Math.random() * 800;
-  setTimeout(()=>{ if(suddenActive){ suddenActive=false; lose(); }}, cpuTime);
-  renderButtons([{t:"פטיבר עמוס",ok:true}, ...getDecoys("פטיבר עמוס").map(x=>({t:x,ok:false}))]);
-  startBar(); stage=100;
+ lock=false;
+ const W=balbalot?WORDS.bal:WORDS.normal;
+
+ switch(stage){
+
+ case 0:
+   show(`PHASE 1<br>${W.challenge}`);
+   buttons([{t:W.challenge,ok:true},...decoys(W.challenge).map(x=>({t:x,ok:false}))]);
+   startBar(); stage=1; break;
+
+ case 1:
+   show(`PHASE 2<br>${W.accept}`);
+   buttons([{t:W.accept,ok:true},...decoys(W.accept).map(x=>({t:x,ok:false}))]);
+   startBar(); stage=2; break;
+
+ case 2:
+   // ===== CHANT חובה! =====
+   show(`CHANT!<br>${W.chant}`);
+   buttons([{t:W.chant,ok:true},...decoys(W.chant).map(x=>({t:x,ok:false}))]);
+   startBar(); stage=3; break;
+
+ case 3:
+   enterArena(); break;
+
+ case 4:
+   show("תיקו!");
+   buttons([{t:"תיקו תיקו",ok:true},
+            {t:"טיקו טיקו",ok:false},
+            {t:"תיקו תיק",ok:false}]);
+   startBar(); stage=5; break;
+
+ case 5:
+   // חזרה מלאה!
+   stage=0; next(); break;
+
+ case 99:
+   sudden(); break;
  }
 }
 
+// ===== ARENA =====
 function enterArena(){
- show(`ARENA ROUND ${round}<br>FIGHT!`);
- let opts=balbalot?Object.keys(BAL):Object.keys(ARENA);
- renderButtons(opts.map(o=>({t:o,ok:true})));
- startBar(); stage=30;
+ show(`ARENA ROUND ${round}`);
+ let opts=Object.keys(balbalot?BAL:ARENA);
+ buttons(opts.map(o=>({t:o,ok:true})));
+ startBar();
+ stage=30;
+}
+
+// RESOLVE FIGHT
+let p,c;
+function fight(sel){
+ stopBar(); lock=true; p=sel;
+ let opts=Object.keys(balbalot?BAL:ARENA);
+ c=opts[Math.random()*opts.length|0];
+
+ show(`YOU: ${p}<br>CPU: ...`);
+ setTimeout(()=>{
+   show(`YOU: ${p}<br>CPU: ${c}`);
+   setTimeout(resolve,900);
+ },700);
 }
 
 function resolve(){
- let table=balbalot?BAL:ARENA;
- if(playerMove===cpuMove){
-  round++;
-  document.getElementById("screen").classList.add("flash-yellow");
-  setTimeout(()=>document.getElementById("screen").classList.remove("flash-yellow"), 300);
-  if(round===3) balbalot=true;
-  if(round>=4){ stage=99; next(); return; } 
-  show("TEKO TEKO!");
-  setTimeout(enterArena, 800);
-  return;
+ let T=balbalot?BAL:ARENA;
+
+ if(p===c){
+   round++;
+   $("screen").classList.add("flash-yellow");
+   setTimeout(()=>$("screen").classList.remove("flash-yellow"),300);
+
+   if(round===3) balbalot=true;
+
+   if(round>=4){ stage=99; next(); return; }
+
+   stage=4; next(); return;
  }
- (table[playerMove]===cpuMove) ? win() : lose();
+
+ (T[p]===c)?win():lose();
 }
 
+// ===== SUDDEN DEATH =====
+function sudden(){
+ const token=++suddenToken;
+
+ show(`
+  <div class="shake flash-red">!!! SUDDEN DEATH !!!</div>
+  <img src="https://img.mako.co.il/2016/05/26/petiber_i.jpg" class="amos-sprite">
+  <div>פטיבר עמוס</div>
+ `);
+
+ let cpu=420+Math.random()*800;
+
+ setTimeout(()=>{
+   if(suddenToken===token){ suddenToken=0; lose(); }
+ },cpu);
+
+ buttons([{t:"פטיבר עמוס",ok:true},
+          ...decoys("פטיבר עמוס").map(x=>({t:x,ok:false}))]);
+
+ startBar(); stage=100;
+}
+
+// ===== START =====
 function start(){
- stage=0; round=1; balbalot=false; barSpeed=3; lockInput=false;
- if(audioCtx.state==='suspended') audioCtx.resume();
+ stage=0; round=1; balbalot=false; lock=false; suddenToken=0;
+ if(audioCtx.state==="suspended") audioCtx.resume();
  startMusic(); next();
 }
 
-show("MEGA KRAV X<br><br>CLICK TO INSERT COIN");
-document.addEventListener('click', ()=>{ if(stage===0 && !musicInterval) start(); }, {once:true});
-function stopBar(){ clearInterval(barTimer); }
+show("MEGA KRAV X<br>CLICK TO INSERT COIN");
+document.addEventListener("click",()=>{ if(!musicInterval) start(); },{once:true});
 </script>
 </body>
 </html>
