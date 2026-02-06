@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<title>Mega Krav 1987</title>
+
+<style>
+body{
+  background:black;
+  color:#33ff33;
+  font-family:monospace;
+  text-align:center;
+}
+#screen{
+  border:3px solid #33ff33;
+  padding:10px;
+  margin:10px;
+  min-height:140px;
+}
+.btn{
+  background:black;
+  color:#33ff33;
+  border:2px solid #33ff33;
+  margin:5px;
+  padding:8px;
+  font-size:16px;
+}
+#timer{
+  font-size:20px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>MEGA KRAV ARCADE SYSTEM</h2>
+
+<div id="timer">TIME: --</div>
+
+<div id="screen">
+INSERT COIN
+</div>
+
+<div id="buttons"></div>
+
+<script>
+// ====== CORE DATA ======
+
+let stage = 0;
+let speed = 5;
+let round = 1;
+let balbalot = false;
+let timer;
+let timeLeft;
+
+const arena = {
+ "בונגלו":"אוניה",
+ "פיירבול":"בונגלו",
+ "צונמי":"פיירבול",
+ "אוניה":"צונמי"
+};
+
+const balArena = {
+ "לונגבו":"אוווניה",
+ "פיירדד":"לונגבו",
+ "נוצמי":"פיירדד",
+ "אוווניה":"נוצמי"
+};
+
+// ====== KORBAN ENGINE ======
+
+function makeDecoys(word){
+  return [
+    word.replace("ו","וו"),
+    word.replace("י","י "),
+    word.replace("ב","פ"),
+    word + "ה",
+    word.replace("ק","כ")
+  ];
+}
+
+function buttonsWithTraps(correct){
+  let arr = [];
+
+  arr.push({t:correct, ok:true});
+
+  makeDecoys(correct)
+    .slice(0,2)
+    .forEach(d => arr.push({t:d, ok:false}));
+
+  arr = arr.sort(()=>Math.random()-0.5);
+
+  let h="";
+  arr.forEach(b=>{
+    h += `<button class='btn'
+           onclick="pressTrap('${b.t}', ${b.ok})">
+           ${b.t}
+          </button>`;
+  });
+
+  document.getElementById("buttons").innerHTML=h;
+}
+
+function pressTrap(text, ok){
+  if(!ok){
+     korban("LANGUAGE FAILURE");
+     return;
+  }
+  press(text);
+}
+
+// ====== TIMER ======
+
+function startTimer(){
+  clearInterval(timer);
+  timeLeft = speed;
+  document.getElementById("timer").innerText="TIME: "+timeLeft;
+
+  timer = setInterval(()=>{
+    timeLeft--;
+    document.getElementById("timer").innerText="TIME: "+timeLeft;
+
+    if(timeLeft<=0){
+      korban("HUMAN TOO SLOW");
+    }
+  },1000);
+}
+
+// ====== GAME FLOW ======
+
+function screen(t){
+ document.getElementById("screen").innerText=t;
+}
+
+function press(t){
+ clearInterval(timer);
+ game(t);
+}
+
+function korban(reason){
+ clearInterval(timer);
+ screen("HAHA YOU IS קורבן\n"+reason);
+ document.getElementById("buttons").innerHTML=
+ "<button class='btn' onclick='start()'>NEW GAME</button>";
+}
+
+// ====== MAIN STATE MACHINE ======
+
+let pMove, cMove;
+
+function game(input){
+
+// --- CHALLENGE ---
+if(stage===0){
+ screen("CHALLENGE PHASE\nSAY: מגה קרב");
+ buttonsWithTraps(balbalot ? "מגה חרב" : "מגה קרב");
+ startTimer();
+ stage=1;
+ return;
+}
+
+// --- ACCEPT ---
+if(stage===1){
+ screen("ACCEPT DUEL\nSAY: סופר קרב");
+ buttonsWithTraps(balbalot ? "סופר חרב" : "סופר קרב");
+ startTimer();
+ stage=2;
+ return;
+}
+
+// --- CHANT ---
+if(stage===2){
+ screen("CHANT NOW:\nמגה מגה מגה " + (balbalot?"חרב":"קרב"));
+ buttonsWithTraps(balbalot?"מגה מגה מגה חרב":"מגה מגה מגה קרב");
+ startTimer();
+ stage=3;
+ return;
+}
+
+// --- ARENA ---
+if(stage===3){
+ screen("ARENA ROUND "+round);
+
+ let opts = balbalot ?
+   ["לונגבו","פיירדד","נוצמי","אוווניה"] :
+   ["בונגלו","פיירבול","צונמי","אוניה"];
+
+ // בחירה שלך
+ pMove = input;
+
+ // מחשב
+ cMove = opts[Math.floor(Math.random()*opts.length)];
+
+ resolve();
+ return;
+}
+
+// --- TEKO ---
+if(stage===4){
+ screen("SAY: תיקו תיקו");
+ buttonsWithTraps("תיקו תיקו");
+ startTimer();
+ stage=0;
+ return;
+}
+
+// --- SUDDEN DEATH ---
+if(stage===99){
+ screen("SUDDEN DEATH\nפטיבר עמוס");
+ buttonsWithTraps("פטיבר עמוס");
+ startTimer();
+
+ stage=100;
+ return;
+}
+
+if(stage===100){
+ screen("YOU WIN\nCOMPUTER מפסידן");
+ document.getElementById("buttons").innerHTML=
+ "<button class='btn' onclick='start()'>NEW GAME</button>";
+}
+
+}
+
+// ====== RESOLVE ARENA ======
+
+function resolve(){
+
+ let table = balbalot ? balArena : arena;
+
+ if(pMove===cMove){
+  teko();
+  return;
+ }
+
+ if(table[pMove]===cMove){
+   win();
+ } else if(table[cMove]===pMove){
+   lose();
+ } else {
+   teko();
+ }
+}
+
+function win(){
+ screen("YOU WIN\nCOMPUTER מפסידן\nDRINK MACHINE");
+ end();
+}
+
+function lose(){
+ screen("APOLOGIES\nYOU ARE מפסידן");
+ end();
+}
+
+function teko(){
+ round++;
+
+ if(round===3){
+   balbalot=true;
+   screen("ENTER שלב הבלבלות\nSPEED UP");
+ }
+
+ if(round>=4){
+   screen("תיקן תיקו\nGO SUDDEN DEATH");
+   stage=99;
+   game();
+   return;
+ }
+
+ speed = Math.max(1, speed-1);
+
+ screen("תיקו תיקו\nROUND "+round);
+ stage=4;
+ game();
+}
+
+function end(){
+ clearInterval(timer);
+ document.getElementById("buttons").innerHTML=
+ "<button class='btn' onclick='start()'>NEW GAME</button>";
+}
+
+// ====== START ======
+
+function start(){
+ stage=0;
+ round=1;
+ speed=5;
+ balbalot=false;
+ game();
+}
+
+start();
+
+</script>
+</body>
+</html>
