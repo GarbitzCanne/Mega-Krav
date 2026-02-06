@@ -5,11 +5,11 @@
 <meta name="viewport"
  content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
 
-<title>Mega Krav</title>
+<title>MEGA KRAV ARCADE</title>
 
 <style>
 body{
- background:#050505;
+ background:#000;
  color:#33ff33;
  font-family:monospace;
  margin:0;
@@ -19,6 +19,17 @@ body{
  max-width:480px;
  margin:auto;
  padding:10px;
+
+ border:4px solid #225522;
+ box-shadow:0 0 20px #00ff00;
+}
+
+/* ===== HEADER LOGO ===== */
+#logo{
+ white-space:pre;
+ text-align:center;
+ color:#44ff44;
+ margin-bottom:6px;
 }
 
 /* ===== TIME BAR ===== */
@@ -66,22 +77,38 @@ body{
  background:#004400;
 }
 
-/* ===== 8BIT ART ===== */
+/* ===== ASCII ART ===== */
+.art{
+ white-space:pre;
+ text-align:center;
+ margin:6px 0;
+}
+
 .win{ color:#ffff33; }
 .lose{ color:#33ff33; }
 .korban{ color:#ff3366; }
 
-.art{
- font-size:16px;
- line-height:1.1;
- text-align:center;
- margin:6px 0;
+.flash{
+ animation:flash 0.3s infinite;
+}
+
+@keyframes flash{
+ 0%{background:#ff0000}
+ 50%{background:#330000}
+ 100%{background:#ff0000}
 }
 </style>
 </head>
 
 <body>
 <div id="app">
+
+<div id="logo">
+╔════════════════════╗
+║   MEGA  KRAV  X    ║
+║  JAPAN ARCADE 92   ║
+╚════════════════════╝
+</div>
 
 <div id="timeBarBox">
  <div id="timeBar"></div>
@@ -94,15 +121,41 @@ body{
 
 <script>
 // ===== STATE =====
-let stage = 0;
-let round = 1;
-let balbalot = false;
+let stage=0;
+let round=1;
+let balbalot=false;
 
 let barTimer;
-let barWidth = 100;
-let barSpeed = 3;
+let barWidth=100;
+let barSpeed=3;
 
 let playerMove,cpuMove;
+let suddenLock=false;
+
+// ===== ASCII ARTS =====
+const ART_WIN=`
+╔══════════════╗
+║  YOU WIN!!   ║
+║   ▄████▄     ║
+║  █▀██▀█▀█    ║
+║  █ ███ █     ║
+╚══════════════╝`;
+
+const ART_LOSE=`
+╔══════════════╗
+║  MAFSIDAN    ║
+║  [ BEER ]    ║
+║  ███████     ║
+║  ███████     ║
+╚══════════════╝`;
+
+const ART_KORBAN=`
+╔══════════════╗
+║   KORBAN!!   ║
+║  (×_×)       ║
+║  STUPID      ║
+║  MISSION     ║
+╚══════════════╝`;
 
 // ===== DATA =====
 const ARENA={
@@ -130,7 +183,7 @@ const DECOY_BANK={
 };
 
 function getDecoys(w){
- return DECOY_BANK[w] || [w+"!",w+"?",w+"*"];
+ return DECOY_BANK[w]||[w+"!",w+"?",w+"*"];
 }
 
 // ===== RENDER =====
@@ -151,23 +204,22 @@ function renderButtons(list){
 
 // ===== TIME BAR =====
 function startBar(){
-
  clearInterval(barTimer);
+ barWidth=100;
 
- barWidth = 100;
- const bar = document.getElementById("timeBar");
-
+ const bar=document.getElementById("timeBar");
+ bar.className="";
  bar.style.width="100%";
  bar.style.background="#33ff33";
 
  barTimer=setInterval(()=>{
 
-  barWidth -= barSpeed;
+  barWidth-=barSpeed;
+  bar.style.width=barWidth+"%";
 
-  bar.style.width = barWidth+"%";
-
-  if(barWidth<50) bar.style.background="#ffaa00";
-  if(barWidth<25) bar.style.background="#ff3333";
+  if(barWidth<25){
+    bar.className="flash";
+  }
 
   if(barWidth<=0){
    korban("TOO SLOW");
@@ -176,53 +228,34 @@ function startBar(){
  },120);
 }
 
-// ===== 8BIT ARTS =====
-const TROPHY=`
-<div class='art win'>
-   ______________
-  |  YOU WIN!!  |
-  |     🏆      |
-  |_____________|
-</div>`;
-
-const BEER=`
-<div class='art lose'>
-   _______
-  | DRINK |
-  |  🍺   |
-  |_______|
-</div>`;
-
-const CRY=`
-<div class='art korban'>
-   _________
-  | KORBAN |
-  |  😭    |
-  |_______ |
-</div>`;
-
 // ===== ENDINGS =====
 function korban(r){
  clearInterval(barTimer);
 
- show(CRY+
- "HAHA YOU IS קורבן\n"+
+ show(
+ ART_KORBAN+
+ "\nHAHA YOU IS קורבן\n"+
  r+
- "\n\nCOMMAND:\nMAKE STUPID MISSION");
+ "\n\nCOMMAND:\nMAKE STUPID MISSION"
+ );
 
  renderButtons([{t:"NEW GAME",ok:true}]);
  stage=-1;
 }
 
 function win(){
- show(TROPHY+
- "YOU WIN\nCOMPUTER מפסידן\n\nCOMMAND:\nDRINK!");
+ show(
+ ART_WIN+
+ "\nYOU WIN\nCOMPUTER מפסידן\n\nCOMMAND:\nDRINK!"
+ );
  end();
 }
 
 function lose(){
- show(BEER+
- "APOLOGIES\nYOU ARE מפסידן\n\nCOMMAND:\nDRINK!");
+ show(
+ ART_LOSE+
+ "\nAPOLOGIES\nYOU ARE מפסידן\n\nCOMMAND:\nDRINK!"
+ );
  end();
 }
 
@@ -244,30 +277,56 @@ function handle(text,ok){
    return;
  }
 
- // ---- ARENA CHOICE ----
+ // ===== SUDDEN DEATH FIX =====
+ if(stage===100 && !suddenLock){
+   suddenLock=true;
+
+   clearInterval(barTimer);
+
+   // זמן תגובה של CPU
+   let cpuTime=300+Math.random()*900;
+
+   setTimeout(()=>{
+     lose();
+   },cpuTime);
+
+   // אם השחקן לחץ – הוא ניצח
+   win();
+   return;
+ }
+
+ // ===== ARENA =====
  if(stage===30){
    clearInterval(barTimer);
 
    playerMove=text;
 
-   let opts = balbalot?
+   let opts=balbalot?
      Object.keys(BAL):
      Object.keys(ARENA);
 
-   cpuMove = opts[
+   cpuMove=opts[
      Math.floor(Math.random()*opts.length)
    ];
 
    show(
+    "=== VS ===\n"+
     "YOU: "+playerMove+
-    "\nCPU: "+cpuMove
+    "\nCPU: ???"
    );
 
-   setTimeout(resolve,700);
+   setTimeout(()=>{
+     show(
+      "YOU: "+playerMove+
+      "\nCPU: "+cpuMove
+     );
+     resolve();
+   },800);
+
    return;
  }
 
- next(text);
+ next();
 }
 
 // ===== FLOW =====
@@ -346,6 +405,8 @@ if(stage===4){
 }
 
 if(stage===99){
+ suddenLock=false;
+
  show("SUDDEN DEATH\nפטיבר עמוס");
 
  renderButtons([
@@ -365,7 +426,7 @@ function enterArena(){
 
  show("ARENA ROUND "+round);
 
- let opts = balbalot?
+ let opts=balbalot?
   Object.keys(BAL):
   Object.keys(ARENA);
 
@@ -380,7 +441,7 @@ function enterArena(){
 // ===== LOGIC =====
 function resolve(){
 
- let table = balbalot?BAL:ARENA;
+ let table=balbalot?BAL:ARENA;
 
  if(playerMove===cpuMove){
    teko(); return;
@@ -421,6 +482,7 @@ function start(){
  round=1;
  balbalot=false;
  barSpeed=3;
+ suddenLock=false;
  next();
 }
 
