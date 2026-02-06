@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<title>MEGA KRAV: ONLINE</title>
+<style>
+/* --- REUSING YOUR EXACT STYLES FOR CONSISTENCY --- */
+:root { --neon: #33ff33; --bg: #050a05; --glitch-red: #ff0033; }
+body { background: #000; color: var(--neon); font-family: 'Courier New', monospace; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; text-transform: uppercase; }
+body::before { content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)); z-index: 10; background-size: 100% 3px, 3px 100%; pointer-events: none; }
+#app { width: 100%; max-width: 440px; background: var(--bg); padding: 15px; border: 4px solid #222; box-shadow: 0 0 30px rgba(0,255,0,0.2); position: relative; z-index: 5; text-align: center; }
+#lobby { display: block; }
+#game { display: none; }
+input { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 10px; font-family: inherit; font-size: 18px; width: 80%; text-align: center; margin-bottom: 10px; }
+.btn { display: block; width: 100%; margin: 8px 0; padding: 16px; background: #1a331a; color: var(--neon); border: none; border-bottom: 5px solid #0a1a0a; font-size: 18px; font-weight: bold; cursor: pointer; }
+.btn:active { transform: translateY(3px); border-bottom: 1px solid #0a1a0a; }
+#status { margin: 15px 0; color: yellow; min-height: 24px; white-space: pre-wrap; }
+#screen { border: 2px solid #113311; background: #000; padding: 20px; min-height: 220px; font-size: 20px; margin-bottom: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+#timeBarBox { width: 100%; height: 14px; background: #001100; border: 2px solid var(--neon); margin-bottom: 12px; }
+#timeBar { height: 100%; width: 100%; background: var(--neon); transition: width 0.05s linear; }
+.amos-sprite { width: 120px; image-rendering: pixelated; border: 2px solid var(--neon); filter: contrast(1.4) grayscale(1) sepia(1) hue-rotate(60deg); }
+.flash-yellow { animation: f-yellow 0.1s 3; } @keyframes f-yellow { 0%, 100% { background: #000; } 50% { background: #aa8800; } }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="lobby">
+    <div style="font-size: 24px; margin-bottom: 20px; border-bottom: 2px solid var(--neon); padding-bottom: 10px;">NET-PLAY MODE</div>
+    <div id="status">CHOOSE MODE</div>
+    <div id="hostControls">
+      <button class="btn" onclick="initHost()">HOST GAME</button>
+      <button class="btn" onclick="showJoin()">JOIN GAME</button>
+    </div>
+    <div id="joinControls" style="display:none">
+      <input type="text" id="joinInput" placeholder="ENTER CODE">
+      <button class="btn" onclick="joinGame()">CONNECT</button>
+      <button class="btn" onclick="location.reload()">BACK</button>
+    </div>
+  </div>
+
+  <div id="game">
+    <div id="timeBarBox"><div id="timeBar"></div></div>
+    <div id="screen"></div>
+    <div id="buttons"></div>
+  </div>
+</div>
+
+<script>
+// --- NETWORK VARS ---
+let peer, conn;
+let myId, hostId;
+let isHost = false;
+let myMove = null;
+let oppMove = null;
+
+// --- GAME VARS ---
+let stage=0, round=1, balbalot=false;
+let barTimer=null, barWidth=100;
+const AMOS_URL = "https://img.mako.co.il/2016/05/26/petiber_i.jpg";
+
+// --- TABLES ---
+const ARENA={ "בונגלו":"אוניה","פיירבול":"בונגלו","צונמי":"פיירבול","אוניה":"צונמי" };
+const BAL={ "לונגבו":"אוווניה","פיירדד":"לונגבו","נוצמי":"פיירדד","אוווניה":"נוצמי" };
+const WORDS={
+ normal:{challenge:"מגה קרב",accept:"סופר קרב",chant:"מגה מגה מגה קרב"},
+ bal:{challenge:"מגה חרב",accept:"סופר חרב",chant:"מגה מגה מגה חרב"}
+};
+const DECOY={
+ "מגה קרב":["מגה קראב","מגע קרב","מגה קרבה"],"סופר קרב":["סופר קראב","סופ קרב","סופר כרב"],
+ "מגה מגה מגה קרב":["מגה מגה קרב"],"תיקו תיקו":["טיקו תיקו","תיקו תיק"],
+ "פטיבר עמוס":["פטיבר אמוס","פטיבר עמוש","פתיבר עמוס"]
+};
+
+// --- AUDIO (Simplified) ---
+let audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+function beep(f,ms=100){
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  let o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.type="square"; o.frequency.value=f;
+  g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+ms/1000);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(); o.stop(audioCtx.currentTime+ms/1000);
+}
+
+// --- LOBBY LOGIC ---
+function setStatus(msg){ document.getElementById("status").innerText = msg; }
+
+function initHost(){
+    setStatus("GENERATING CODE...");
+    peer = new Peer();
+    peer.on('open', (id) => {
+        myId = id;
+        isHost = true;
+        document.getElementById("hostControls").innerHTML = `
+            <div>YOUR CODE:</div>
+            <div style="font-size:30px; margin:15px; color:#fff; border:2px dashed var(--neon); padding:10px; user-select:text;">${id}</div>
+            <div style="font-size:14px; color:#aaa;">SHARE THIS WITH PLAYER 2</div>
+        `;
+    });
+    peer.on('connection', (c) => {
+        conn = c;
+        setupConnection();
+    });
+}
+
+function showJoin(){
+    document.getElementById("hostControls").style.display="none";
+    document.getElementById("joinControls").style.display="block";
+}
+
+function joinGame(){
+    hostId = document.getElementById("joinInput").value.trim();
+    if(!hostId) return;
+    setStatus("CONNECTING...");
+    peer = new Peer();
+    peer.on('open', () => {
+        conn = peer.connect(hostId);
+        setupConnection();
+    });
+}
+
+function setupConnection(){
+    conn.on('open', () => {
+        setStatus("CONNECTED!");
+        setTimeout(startGameUI, 1000);
+    });
+    conn.on('data', (data) => handleData(data));
+}
+
+function handleData(data){
+    if(data.type === 'DIE') { win("OPPONENT DIED"); }
+    if(data.type === 'WIN') { lose("OPPONENT WON"); }
+    if(data.type === 'MOVE') { 
+        oppMove = data.val;
+        if(myMove) resolveRound(); 
+    }
+}
+
+function send(data){ if(conn && conn.open) conn.send(data); }
+
+// --- GAME UI START ---
+function startGameUI(){
+    document.getElementById("lobby").style.display="none";
+    document.getElementById("game").style.display="block";
+    startMusicLoop();
+    next();
+}
+
+function startMusicLoop(){
+    setInterval(()=>{ beep(150,50); }, 500); // Simple heartbeat
+}
+
+// --- GAMEPLAY FLOW ---
+function show(h){ document.getElementById("screen").innerHTML=h; }
+function buttons(arr){
+    document.getElementById("buttons").innerHTML = arr.map(b=>
+        `<button class='btn' onclick="press('${b.t}',${b.ok})">${b.t}</button>`
+    ).join("");
+}
+function decoys(w){
+ let d=[...(DECOY[w]||[])];
+ while(d.length<2) d.push(w+"X");
+ return [...new Set(d)].slice(0,2);
+}
+
+function press(t, ok){
+    if(stage === -1) return; // Dead/Win state
+
+    // 1. GATEKEEPER PHASES
+    if(stage < 30 && stage !== 4) {
+        if(!ok) {
+            send({type: 'DIE'});
+            korban("WRONG BUTTON");
+        } else {
+            stopBar();
+            next(); // Advance locally
+        }
+        return;
+    }
+
+    // 2. TIE BREAKER
+    if(stage === 4) {
+        if(!ok) { send({type:'DIE'}); korban("WRONG BUTTON"); }
+        else { stopBar(); next(); }
+        return;
+    }
+
+    // 3. SUDDEN DEATH
+    if(stage === 100) {
+        if(!ok) { send({type:'DIE'}); korban("WRONG BUTTON"); }
+        else {
+            send({type:'WIN'});
+            win("FASTEST FINGER");
+        }
+        return;
+    }
+
+    // 4. ARENA
+    if(stage === 30) {
+        stopBar();
+        myMove = t;
+        show(`YOU: ${myMove}<br>OPP: ...`);
+        document.getElementById("buttons").innerHTML = "<div class='btn'>WAITING...</div>";
+        send({type: 'MOVE', val: t});
+        if(oppMove) resolveRound();
+    }
+}
+
+function next(){
+    const W = balbalot ? WORDS.bal : WORDS.normal;
+    barWidth = 100;
+    
+    // Logic Mapping
+    if(stage === 0) {
+        show(W.challenge);
+        buttons([{t:W.challenge,ok:true},...decoys(W.challenge).map(x=>({t:x,ok:false}))]);
+        startBar(); stage=1; 
+    }
+    else if(stage === 1) {
+        show(W.accept);
+        buttons([{t:W.accept,ok:true},...decoys(W.accept).map(x=>({t:x,ok:false}))]);
+        startBar(); stage=2;
+    }
+    else if(stage === 2) {
+        show(W.chant);
+        buttons([{t:W.chant,ok:true},...decoys(W.chant).map(x=>({t:x,ok:false}))]);
+        startBar(); stage=3;
+    }
+    else if(stage === 3) {
+        enterArena();
+    }
+    else if(stage === 4) {
+        show("TEKO TEKO!");
+        buttons([{t:"תיקו תיקו",ok:true},...decoys("תיקו תיקו").map(x=>({t:x,ok:false}))]);
+        startBar(); stage=5;
+    }
+    else if(stage === 5) {
+        stage=0; next();
+    }
+}
+
+function enterArena(){
+    myMove = null; oppMove = null;
+    show(`ARENA ROUND ${round}<br>PICK MOVE`);
+    let opts = Object.keys(balbalot?BAL:ARENA);
+    buttons(opts.map(o=>({t:o,ok:true})));
+    startBar(10); // Slower bar for strategy
+    stage = 30;
+}
+
+function resolveRound(){
+    show(`YOU: ${myMove}<br>OPP: ${oppMove}`);
+    
+    let T = balbalot ? BAL : ARENA;
+    
+    setTimeout(() => {
+        if(myMove === oppMove) {
+            round++;
+            document.getElementById("screen").classList.add("flash-yellow");
+            setTimeout(()=>document.getElementById("screen").classList.remove("flash-yellow"), 300);
+            if(round === 3) balbalot = true;
+            if(round >= 4) { enterSuddenDeath(); return; }
+            stage = 4; next(); // Go to TEKO
+        } else if (T[myMove] === oppMove) {
+            send({type: 'WIN'}); // I win, tell them they lost (failsafe)
+            win("VICTORY");
+        } else {
+            lose("DEFEAT");
+        }
+    }, 1000);
+}
+
+function enterSuddenDeath(){
+    stage = 100;
+    show(`<div class="flash-yellow">SUDDEN DEATH</div><img src="${AMOS_URL}" class="amos-sprite">`);
+    buttons([{t:"פטיבר עמוס",ok:true},...decoys("פטיבר עמוס").map(x=>({t:x,ok:false}))]);
+    startBar(20); // Fast!
+}
+
+function startBar(speed=3){
+    clearInterval(barTimer);
+    barTimer = setInterval(()=>{
+        barWidth -= speed;
+        document.getElementById("timeBar").style.width = barWidth+"%";
+        if(barWidth <= 0) {
+            send({type: 'DIE'});
+            korban("TOO SLOW");
+        }
+    }, 120);
+}
+
+function stopBar(){ clearInterval(barTimer); }
+
+function korban(reason){
+    stopBar(); stage = -1;
+    show(`💀 KORBAN 💀<br>${reason}`);
+    document.getElementById("buttons").innerHTML = "<button class='btn' onclick='location.reload()'>LOBBY</button>";
+}
+function win(reason){
+    stopBar(); stage = -1;
+    show(`🏆 YOU WIN 🏆<br>${reason}`);
+    document.getElementById("buttons").innerHTML = "<button class='btn' onclick='location.reload()'>LOBBY</button>";
+}
+function lose(reason){
+    stopBar(); stage = -1;
+    show(`🍺 YOU LOSE 🍺<br>${reason}`);
+    document.getElementById("buttons").innerHTML = "<button class='btn' onclick='location.reload()'>LOBBY</button>";
+}
+
+</script>
+</body>
+</html>
