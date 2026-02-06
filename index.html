@@ -6,36 +6,139 @@
 <title>MEGA KRAV ARCADE: TURBO</title>
 
 <style>
-:root{--neon:#33ff33;--bg:#050a05;}
-body{
- background:#000;color:var(--neon);
- font-family:'Courier New',monospace;
- margin:0;display:flex;justify-content:center;align-items:center;
- height:100vh;text-transform:uppercase;
+:root {
+  --neon: #33ff33;
+  --bg: #050a05;
+  --glitch-red: #ff0033;
 }
-#app{
- width:100%;max-width:440px;
- background:var(--bg);padding:15px;
- border:4px solid #222;text-align:center;
+
+body {
+  background: #000;
+  color: var(--neon);
+  font-family: 'Courier New', monospace;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+  text-transform: uppercase;
 }
-#timeBarBox{width:100%;height:14px;background:#001100;border:2px solid var(--neon);}
-#timeBar{height:100%;width:100%;background:var(--neon);}
-#screen{
- border:2px solid #113311;background:#000;
- padding:20px;min-height:240px;margin-bottom:12px;
- display:flex;flex-direction:column;justify-content:center;align-items:center;
+
+/* CRT SCANLINE OVERLAY */
+body::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), 
+              linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  z-index: 10;
+  background-size: 100% 3px, 3px 100%;
+  pointer-events: none;
 }
-.btn{
- display:block;width:100%;margin:8px 0;
- padding:16px;background:#1a331a;color:var(--neon);
- border:none;border-bottom:5px solid #0a1a0a;
+
+#app {
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg);
+  padding: 15px;
+  border: 4px solid #222;
+  box-shadow: 0 0 30px rgba(0,255,0,0.2);
+  position: relative;
+  z-index: 5;
+  text-align: center;
 }
-.sprite{font-size:50px;margin-bottom:10px;}
+
+#timeBarBox {
+  width: 100%;
+  height: 14px;
+  background: #001100;
+  border: 2px solid var(--neon);
+  margin-bottom: 12px;
+}
+
+#timeBar {
+  height: 100%;
+  width: 100%;
+  background: var(--neon);
+  transition: width 0.05s linear;
+}
+
+#screen {
+  border: 2px solid #113311;
+  background: #000;
+  padding: 20px;
+  min-height: 240px;
+  font-size: 20px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* THE PETIT BEURRE BOSS RENDER */
+.amos-sprite {
+  width: 140px;
+  height: auto;
+  image-rendering: pixelated; /* THE 8-BIT LOOK */
+  border: 2px solid var(--neon);
+  margin: 10px 0;
+  filter: contrast(1.4) grayscale(1) sepia(1) hue-rotate(60deg) brightness(1.1);
+  box-shadow: 0 0 15px var(--neon);
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  padding: 16px;
+  background: #1a331a;
+  color: var(--neon);
+  border: none;
+  border-bottom: 5px solid #0a1a0a;
+  border-radius: 4px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.05s;
+}
+
+.btn:active {
+  transform: translateY(3px);
+  border-bottom: 1px solid #0a1a0a;
+}
+
+/* ANIMATIONS */
+.sprite { 
+  font-size: 16px; 
+  margin-bottom: 10px; 
+  line-height: 1.2;
+  font-family: monospace;
+}
+pre.sprite {
+  margin: 0;
+  white-space: pre;
+}
+.bounce { animation: bounce 0.5s infinite alternate; }
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+.spin { animation: spin 1s infinite linear; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.shake { animation: shake 0.2s infinite; }
+@keyframes shake { 0%, 100% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, -2px); } }
+.flash-yellow { animation: f-yellow 0.1s 3; }
+@keyframes f-yellow { 0%, 100% { background: #000; } 50% { background: #aa8800; } }
+.flash-red { animation: f-red 0.3s infinite; }
+@keyframes f-red { 0% { color: #ff0000; } 100% { color: #fff; } }
 </style>
 </head>
 
 <body>
 <div id="app">
+<div id="logo">MEGA KRAV X - JAPAN ARCADE 92</div>
 <div id="timeBarBox"><div id="timeBar"></div></div>
 <div id="screen"></div>
 <div id="buttons"></div>
@@ -69,6 +172,30 @@ function decoys(w){
  return [...new Set(d)].slice(0,2);
 }
 
+// ===== AUDIO ENGINE =====
+let audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+let musicInterval;
+const ACTION_BASS = [164.81, 164.81, 196.00, 220.00];
+
+function beep(f,ms=120,type="square"){
+  let o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.type=type; o.frequency.value=f;
+  g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+ms/1000);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(); o.stop(audioCtx.currentTime+ms/1000);
+}
+
+function startMusic(){
+  stopMusic(); let i=0;
+  musicInterval=setInterval(()=>{
+    beep(ACTION_BASS[i%4], 200, "sawtooth");
+    if(i%2===0) beep(60, 50, "triangle");
+    i++;
+  }, 250 - (round*8));
+}
+function stopMusic(){ clearInterval(musicInterval); }
+
 // ===== UI =====
 const $=id=>document.getElementById(id);
 function show(h){$("screen").innerHTML=h;}
@@ -92,20 +219,43 @@ function stopBar(){clearInterval(barTimer);}
 
 // ===== ENDINGS =====
 function korban(r){
- stopBar(); lock=true;
- show(`<div class="sprite">💀</div>קורבן!<br>${r}`);
+ stopBar(); stopMusic(); lock=true;
+ beep(80, 500, "sawtooth");
+ show(`<pre class="sprite spin">
+  _____ 
+ /     \\
+|  X X  |
+|   ^   |
+ \\_____/
+  DEAD
+</pre>קורבן!<br>${r}`);
  setTimeout(()=>buttons([{t:"חדש",ok:true}]),1000);
  stage=-1;
 }
 function win(){
- stopBar(); lock=true;
- show(`<div class="sprite">👍</div>ניצחון!`);
+ stopBar(); stopMusic(); lock=true;
+ [523, 659, 784].forEach((f,i)=>setTimeout(()=>beep(f,150), i*100));
+ show(`<pre class="sprite bounce">
+  \\o/
+   |    GG EZ
+  / \\   
+ VICTORY
+</pre>ניצחון!`);
  setTimeout(()=>buttons([{t:"שוב",ok:true}]),1200);
  stage=-1;
 }
 function lose(){
- stopBar(); lock=true;
- show(`<div class="sprite">🍺</div>מפסידן!`);
+ stopBar(); stopMusic(); lock=true;
+ [200, 150, 100].forEach((f,i)=>setTimeout(()=>beep(f,200), i*150));
+ show(`<pre class="sprite shake">
+    ___
+   |   |
+   | _ |  
+   |___|
+  /|   |\\
+   LOSER
+  DRINK UP
+</pre>מפסידן!`);
  setTimeout(()=>buttons([{t:"שוב",ok:true}]),1200);
  stage=-1;
 }
@@ -118,6 +268,11 @@ function press(t,ok){
  // ★★ הקריטי ★★
  if(stage===30){
    fight(t);
+   return;
+ }
+ 
+ if(stage===100){
+   win();
    return;
  }
 
@@ -167,15 +322,15 @@ function enterArena(){
  startBar(); stage=30;
 }
 
-// ★★ הקרב האמיתי ★★
+// ★★ הקרב האמיתי – FIXED ★★
 function fight(sel){
  stopBar(); lock=true;
  p=sel;
 
  let opts=Object.keys(balbalot?BAL:ARENA);
- c=opts[Math.random()*opts.length|0];
+ c=opts[Math.floor(Math.random()*opts.length)];
 
- show(`אתה: ${p}<br>CPU: ...`);
+ show(`אתה: ${p}<br>CPU: <span class="shake">...</span>`);
  setTimeout(()=>{
    show(`אתה: ${p}<br>CPU: ${c}`);
    setTimeout(resolve,800);
@@ -187,6 +342,8 @@ function resolve(){
 
  if(p===c){
    round++;
+   $("screen").classList.add("flash-yellow");
+   setTimeout(()=>$("screen").classList.remove("flash-yellow"), 300);
    if(round===3) balbalot=true;
 
    if(round>=4){
@@ -201,7 +358,12 @@ function resolve(){
 
 // ===== SUDDEN DEATH =====
 function sudden(){
- show("פטיבר עמוס!");
+ const amosUrl = "https://img.mako.co.il/2016/05/26/petiber_i.jpg";
+ show(`
+   <div class="shake flash-red">!!! SUDDEN DEATH !!!</div>
+   <img src="${amosUrl}" class="amos-sprite">
+   <div class="flash">פטיבר עמוס</div>
+ `);
  buttons([{t:"פטיבר עמוס",ok:true},...decoys("פטיבר עמוס").map(x=>({t:x,ok:false}))]);
  startBar(); stage=100;
 }
@@ -209,10 +371,12 @@ function sudden(){
 // ===== START =====
 function start(){
  stage=0; round=1; balbalot=false; lock=false;
+ if(audioCtx.state==='suspended') audioCtx.resume();
+ startMusic();
  next();
 }
 
-show("לחץ להתחיל");
+show("MEGA KRAV X<br><br>CLICK TO INSERT COIN");
 document.addEventListener("click",()=>start(),{once:true});
 </script>
 </body>
