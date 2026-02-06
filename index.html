@@ -3,401 +3,159 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
-<title>MEGA KRAV ARCADE: TURBO</title>
+<title>MEGA KRAV: AMOS NERFED EDITION</title>
 
 <style>
-:root {
-  --neon: #33ff33;
-  --bg: #050a05;
-  --glitch-red: #ff0033;
-}
-
-body {
-  background: #000;
-  color: var(--neon);
-  font-family: 'Courier New', monospace;
-  margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  overflow: hidden;
-  text-transform: uppercase;
-}
-
-/* CRT SCANLINE OVERLAY */
-body::before {
-  content: " ";
-  display: block;
-  position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), 
-              linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-  z-index: 10;
-  background-size: 100% 3px, 3px 100%;
-  pointer-events: none;
-}
-
-#app {
-  width: 100%;
-  max-width: 440px;
-  background: var(--bg);
-  padding: 15px;
-  border: 4px solid #222;
-  box-shadow: 0 0 30px rgba(0,255,0,0.2);
-  position: relative;
-  z-index: 5;
-  text-align: center;
-}
-
-#timeBarBox {
-  width: 100%;
-  height: 14px;
-  background: #001100;
-  border: 2px solid var(--neon);
-  margin-bottom: 12px;
-}
-
-#timeBar {
-  height: 100%;
-  width: 100%;
-  background: var(--neon);
-  transition: width 0.05s linear;
-}
-
-#screen {
-  border: 2px solid #113311;
-  background: #000;
-  padding: 20px;
-  min-height: 240px;
-  font-size: 20px;
-  margin-bottom: 12px;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-/* THE PETIT BEURRE BOSS RENDER */
-.amos-sprite {
-  width: 140px;
-  height: auto;
-  image-rendering: pixelated;
-  border: 2px solid var(--neon);
-  margin: 10px 0;
-  filter: contrast(1.4) grayscale(1) sepia(1) hue-rotate(60deg) brightness(1.1);
-  box-shadow: 0 0 15px var(--neon);
-}
-
-.btn {
-  display: block;
-  width: 100%;
-  margin: 8px 0;
-  padding: 16px;
-  background: #1a331a;
-  color: var(--neon);
-  border: none;
-  border-bottom: 5px solid #0a1a0a;
-  border-radius: 4px;
-  font-size: 18px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.05s;
-}
-
-.btn:active {
-  transform: translateY(3px);
-  border-bottom: 1px solid #0a1a0a;
-}
-
-/* ANIMATIONS */
-.sprite { 
-  font-size: 16px; 
-  margin-bottom: 10px; 
-  line-height: 1.2;
-  font-family: monospace;
-}
-pre.sprite {
-  margin: 0;
-  white-space: pre;
-}
-.bounce { animation: bounce 0.5s infinite alternate; }
-@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
-.spin { animation: spin 1s infinite linear; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+:root { --neon: #33ff33; --bg: #050a05; }
+body { background: #000; color: var(--neon); font-family: 'Courier New', monospace; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; text-transform: uppercase; }
+#app { width: 100%; max-width: 440px; background: var(--bg); padding: 15px; border: 4px solid #222; box-shadow: 0 0 30px rgba(0,255,0,0.2); position: relative; z-index: 5; text-align: center; }
+#timeBarBox { width: 100%; height: 14px; background: #001100; border: 2px solid var(--neon); margin-bottom: 12px; }
+#timeBar { height: 100%; width: 100%; background: var(--neon); transition: width 0.05s linear; }
+#screen { border: 2px solid #113311; background: #000; padding: 20px; min-height: 250px; font-size: 22px; margin-bottom: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.amos-sprite { width: 140px; border: 2px solid var(--neon); margin: 10px 0; filter: contrast(1.2) sepia(1) hue-rotate(60deg); }
+.btn { display: block; width: 100%; margin: 8px 0; padding: 16px; background: #1a331a; color: var(--neon); border: none; border-bottom: 5px solid #0a1a0a; border-radius: 4px; font-size: 18px; font-weight: bold; cursor: pointer; }
+.btn:active { transform: translateY(3px); border-bottom: 1px solid #0a1a0a; }
+.flash-yellow { animation: f-yellow 0.15s 2; }
+@keyframes f-yellow { 0%, 100% { background: #000; } 50% { background: #aa8800; } }
 .shake { animation: shake 0.2s infinite; }
 @keyframes shake { 0%, 100% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, -2px); } }
-.flash-yellow { animation: f-yellow 0.1s 3; }
-@keyframes f-yellow { 0%, 100% { background: #000; } 50% { background: #aa8800; } }
-.flash-red { animation: f-red 0.3s infinite; }
-@keyframes f-red { 0% { color: #ff0000; } 100% { color: #fff; } }
 </style>
 </head>
 
 <body>
 <div id="app">
-<div id="logo">MEGA KRAV X - JAPAN ARCADE 92</div>
+<div id="logo">MEGA KRAV ARCADE 2026</div>
 <div id="timeBarBox"><div id="timeBar"></div></div>
 <div id="screen"></div>
 <div id="buttons"></div>
 </div>
 
 <script>
-// ===== STATE =====
-let stage=0, round=1, balbalot=false, lock=false;
-let barTimer=null, barWidth=100;
-let p,c;
-let suddenActive=false;
-
-// ===== TABLES =====
-const ARENA={ "בונגלו":"אוניה","פיירבול":"בונגלו","צונמי":"פיירבול","אוניה":"צונמי" };
-const BAL  ={ "לונגבו":"אוווניה","פיירדד":"לונגבו","נוצמי":"פיירדד","אוווניה":"נוצמי" };
-
-const WORDS={
- normal:{challenge:"מגה קרב",accept:"סופר קרב",chant:"מגה מגה מגה קרב"},
- bal:{challenge:"מגה חרב",accept:"סופר חרב",chant:"מגה מגה מגה חרב"}
+// --- DATA ---
+const MOVES = {
+  NORMAL: ["בונגלו", "פיירבול", "צונמי", "אונייה"],
+  BAL: ["לונגבו", "פיירדד", "נוצמי", "אוווניה"]
 };
 
-const DECOY={
- "מגה קרב":["מגה קראב","מגע קרב","מגה קרבה"],
- "סופר קרב":["סופר קראב","סופ קרב","סופר כרב"],
- "מגה מגה מגה קרב":["מגה מגה קרב"],
- "תיקו תיקו":["טיקו תיקו","תיקו תיק","טיקו טיקו"],
- "פטיבר עמוס":["פטיבר אמוס","פטיבר עמוש","פתיבר עמוס"]
-};
-
-function decoys(w){
- let d=[...(DECOY[w]||[])];
- while(d.length<2) d.push(w+"X");
- return [...new Set(d)].slice(0,2);
+// --- LOGIC ---
+function getWinner(m1, m2, isBal) {
+  const list = isBal ? MOVES.BAL : MOVES.NORMAL;
+  const winPairs = [
+    [list[0], list[3]], // Bungalo > Onyia
+    [list[1], list[0]], // Fireball > Bungalo
+    [list[2], list[1]], // Tsunami > Fireball
+    [list[3], list[2]]  // Onyia > Tsunami
+  ];
+  return winPairs.some(pair => pair[0] === m1 && pair[1] === m2);
 }
 
-// ===== AUDIO ENGINE =====
-let audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-let musicInterval;
-const ACTION_BASS = [164.81, 164.81, 196.00, 220.00];
+// --- STATE ---
+let stage=0, round=1, balbalot=false, lock=false, barTimer, barWidth=100, pChoice, cChoice, suddenActive=false;
+const $ = id => document.getElementById(id);
 
-function beep(f,ms=120,type="square"){
-  let o=audioCtx.createOscillator(), g=audioCtx.createGain();
-  o.type=type; o.frequency.value=f;
-  g.gain.setValueAtTime(0.1, audioCtx.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+ms/1000);
-  o.connect(g); g.connect(audioCtx.destination);
-  o.start(); o.stop(audioCtx.currentTime+ms/1000);
+function resolve() {
+  const playerWins = getWinner(pChoice, cChoice, balbalot);
+  const cpuWins = getWinner(cChoice, pChoice, balbalot);
+
+  if (playerWins) {
+    win();
+  } else if (cpuWins) {
+    lose();
+  } else {
+    // TEKO TEKO Logic
+    round++;
+    $("screen").classList.add("flash-yellow");
+    setTimeout(() => $("screen").classList.remove("flash-yellow"), 300);
+    if (round === 3) balbalot = true;
+    if (round >= 4) { sudden(); return; }
+    stage = 4; 
+    next();
+  }
 }
 
-function startMusic(){
-  stopMusic(); let i=0;
-  musicInterval=setInterval(()=>{
-    beep(ACTION_BASS[i%4], 200, "sawtooth");
-    if(i%2===0) beep(60, 50, "triangle");
-    i++;
-  }, 250 - (round*8));
-}
-function stopMusic(){ clearInterval(musicInterval); }
+// --- FLOW ---
+function next() {
+  const W = balbalot 
+    ? { chal: "מגה חרב", acc: "סופר חרב", chant: "מגה מגה מגה חרב" } 
+    : { chal: "מגה קרב", acc: "סופר קרב", chant: "מגה מגה מגה קרב" };
 
-// ===== UI =====
-const $=id=>document.getElementById(id);
-function show(h){$("screen").innerHTML=h;}
-
-function buttons(arr){
- if(lock) return;
- $("buttons").innerHTML=arr.map(b=>
-  `<button class='btn' onclick="press('${b.t}',${b.ok})">${b.t}</button>`
- ).join("");
-}
-
-// ===== TIMER =====
-function startBar(){
- clearInterval(barTimer); barWidth=100;
- barTimer=setInterval(()=>{
-  barWidth-=3; $("timeBar").style.width=barWidth+"%";
-  if(barWidth<=0) korban("TOO SLOW");
- },120);
-}
-function stopBar(){clearInterval(barTimer);}
-
-// ===== ENDINGS =====
-function korban(r){
- stopBar(); stopMusic(); lock=true;
- beep(80, 500, "sawtooth");
- show(`<pre class="sprite spin">
-  _____ 
- /     \\
-|  X X  |
-|   ^   |
- \\_____/
-  DEAD
-</pre>KORBAN!!<br>${r}`);
- setTimeout(()=>buttons([{t:"NEW GAME",ok:true}]),1000);
- stage=-1;
+  if (stage === 0) {
+    show(W.chal);
+    btns([{ t: W.chal, ok: true }, { t: "מגע קרב", ok: false }]);
+    startBar(); stage = 1;
+  } else if (stage === 1) {
+    show(W.acc);
+    btns([{ t: W.acc, ok: true }, { t: "סופר כרב", ok: false }]);
+    startBar(); stage = 2;
+  } else if (stage === 2) {
+    show(W.chant);
+    btns([{ t: W.chant, ok: true }, { t: "מגה מגה קרב", ok: false }]);
+    startBar(); stage = 3;
+  } else if (stage === 3) {
+    show(`ARENA ROUND ${round}<br>בחר מהלך!`);
+    btns((balbalot ? MOVES.BAL : MOVES.NORMAL).map(m => ({ t: m, ok: true })));
+    startBar(); stage = 30;
+  } else if (stage === 4) {
+    show("TEKO TEKO!");
+    btns([{ t: "תיקו תיקו", ok: true }, { t: "טיקו תיקו", ok: false }]);
+    startBar(); stage = 5;
+  } else if (stage === 5) {
+    stage = 0; next();
+  }
 }
 
-function win(){
- stopBar(); stopMusic(); lock=true;
- [523, 659, 784].forEach((f,i)=>setTimeout(()=>beep(f,150), i*100));
- show(`<pre class="sprite bounce">
-  \\o/
-   |    GG EZ
-  / \\   
- VICTORY
-</pre>YOU WIN!<br>COMPUTER LOSE`);
- setTimeout(()=>buttons([{t:"DRINK & RESTART",ok:true}]),1200);
- stage=-1;
+function press(t, ok) {
+  if (stage === -1) { start(); return; }
+  if (!ok) { gameOver("טעות בקלט!"); return; }
+  if (stage === 100) { suddenActive = false; stopBar(); win(); return; }
+  
+  if (stage === 30) {
+    stopBar(); pChoice = t;
+    const currentMoves = balbalot ? MOVES.BAL : MOVES.NORMAL;
+    cChoice = currentMoves[Math.floor(Math.random() * 4)];
+    show(`אתה: ${pChoice}<br>יריב: <span class="shake">...</span>`);
+    setTimeout(() => {
+      show(`אתה: ${pChoice}<br>יריב: ${cChoice}`);
+      setTimeout(resolve, 800);
+    }, 600);
+    return;
+  }
+  next();
 }
 
-function lose(){
- stopBar(); stopMusic(); lock=true;
- [200, 150, 100].forEach((f,i)=>setTimeout(()=>beep(f,200), i*150));
- show(`<pre class="sprite shake">
-    ___
-   |   |
-   | _ |  
-   |___|
-  /|   |\\
-   LOSER
-  DRINK UP
-</pre>MAFSIDAN!<br>DRINK BEER`);
- setTimeout(()=>buttons([{t:"RETRY",ok:true}]),1200);
- stage=-1;
+// --- ENGINE ---
+function startBar() {
+  clearInterval(barTimer); barWidth = 100;
+  barTimer = setInterval(() => {
+    barWidth -= 2; // Slower bar decay
+    $("timeBar").style.width = barWidth + "%";
+    if (barWidth <= 0) gameOver("איטי מדי!");
+  }, 100);
+}
+function stopBar() { clearInterval(barTimer); }
+function show(h) { $("screen").innerHTML = h; }
+function btns(arr) { 
+  $("buttons").innerHTML = arr.map(b => `<button class='btn' onclick="press('${b.t}', ${b.ok})">${b.t}</button>`).join(""); 
 }
 
-// ===== INPUT HANDLER – FIXED =====
-function press(t,ok){
- if(stage===-1){ start(); return; }
- if(!ok){ korban("WRONG INPUT"); return; }
+function win() { show("NICE!<br>ניצחת את הסיבוב"); stage = -1; btns([{ t: "עוד פעם?", ok: true }]); }
+function lose() { show("LOSE!<br>לך לשתות בירה"); stage = -1; btns([{ t: "נסה שוב", ok: true }]); }
+function gameOver(msg) { stopBar(); show(`GAME OVER<br>${msg}`); stage = -1; btns([{ t: "אתחול", ok: true }]); }
 
- // ★★ SUDDEN DEATH BOSS FIGHT ★★
- if(stage===100){ 
-   if(!suddenActive) return;
-   suddenActive=false; 
-   stopBar();
-   win(); 
-   return; 
- }
-
- // ★★ ARENA FIGHT ★★
- if(stage===30){
-   fight(t);
-   return;
- }
-
- next();
+function sudden() {
+  show(`!!! SUDDEN DEATH !!!<br><img src="https://img.mako.co.il/2016/05/26/petiber_i.jpg" class="amos-sprite"><br>עמוס פטיבר הופיע!`);
+  suddenActive = true;
+  // Amos is now slower (1.8 seconds instead of 0.7)
+  let reactionTime = 1800; 
+  setTimeout(() => { if (suddenActive) lose(); }, reactionTime);
+  btns([{ t: "פטיבר עמוס", ok: true }, { t: "פתיבר אמוס", ok: false }]);
+  stage = 100;
 }
 
-// ===== FLOW =====
-function next(){
- lock=false;
- const W=balbalot?WORDS.bal:WORDS.normal;
+function start() { stage = 0; round = 1; balbalot = false; next(); }
 
- switch(stage){
-
- case 0:
-   show(W.challenge);
-   buttons([{t:W.challenge,ok:true},...decoys(W.challenge).map(x=>({t:x,ok:false}))]);
-   startBar(); stage=1; break;
-
- case 1:
-   show(W.accept);
-   buttons([{t:W.accept,ok:true},...decoys(W.accept).map(x=>({t:x,ok:false}))]);
-   startBar(); stage=2; break;
-
- case 2:
-   show(W.chant);
-   buttons([{t:W.chant,ok:true},...decoys(W.chant).map(x=>({t:x,ok:false}))]);
-   startBar(); stage=3; break;
-
- case 3:
-   enterArena(); break;
-
- case 4:
-   show("TEKO TEKO!");
-   buttons([{t:"תיקו תיקו",ok:true},{t:"טיקו",ok:false},...decoys("תיקו תיקו").slice(1).map(x=>({t:x,ok:false}))]);
-   startBar(); stage=5; break;
-
- case 5:
-   stage=0; next(); break;
- }
-}
-
-// ===== ARENA =====
-function enterArena(){
- show(`ARENA ROUND ${round}<br>FIGHT!`);
- let opts=Object.keys(balbalot?BAL:ARENA);
- buttons(opts.map(o=>({t:o,ok:true})));
- startBar(); stage=30;
-}
-
-// ★★ הקרב האמיתי – FIXED ★★
-function fight(sel){
- stopBar(); lock=true;
- p=sel;
-
- let opts=Object.keys(balbalot?BAL:ARENA);
- c=opts[Math.floor(Math.random()*opts.length)];
-
- show(`YOU: ${p}<br>CPU: <span class="shake">...</span>`);
- setTimeout(()=>{
-   show(`YOU: ${p}<br>CPU: ${c}`);
-   setTimeout(resolve,800);
- },600);
-}
-
-function resolve(){
- let T=balbalot?BAL:ARENA;
-
- if(p===c){
-   round++;
-   $("screen").classList.add("flash-yellow");
-   setTimeout(()=>$("screen").classList.remove("flash-yellow"), 300);
-   if(round===3) balbalot=true;
-
-   if(round>=4){
-     sudden(); return;
-   }
-
-   stage=4; next(); return;
- }
-
- (T[p]===c)?win():lose();
-}
-
-// ===== SUDDEN DEATH =====
-function sudden(){
- const amosUrl = "https://img.mako.co.il/2016/05/26/petiber_i.jpg";
- show(`
-   <div class="shake flash-red">!!! SUDDEN DEATH !!!</div>
-   <img src="${amosUrl}" class="amos-sprite">
-   <div class="flash">פטיבר עמוס</div>
- `);
- 
- // CPU RACE - player must click correct button before CPU "clicks" it
- suddenActive=true;
- let cpuTime = 420 + Math.random() * 800;
- setTimeout(()=>{ 
-   if(suddenActive){ 
-     suddenActive=false; 
-     lose(); 
-   }
- }, cpuTime);
- 
- buttons([{t:"פטיבר עמוס",ok:true},...decoys("פטיבר עמוס").map(x=>({t:x,ok:false}))]);
- startBar(); 
- stage=100;
-}
-
-// ===== START =====
-function start(){
- stage=0; round=1; balbalot=false; lock=false; suddenActive=false;
- if(audioCtx.state==='suspended') audioCtx.resume();
- startMusic();
- next();
-}
-
-show("MEGA KRAV X<br><br>CLICK TO INSERT COIN");
-document.addEventListener("click",()=>start(),{once:true});
+show("MEGA KRAV X<br>לחץ להתחלה");
+document.addEventListener("click", () => start(), { once: true });
 </script>
 </body>
 </html>
