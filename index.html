@@ -5,7 +5,7 @@
 <meta name="viewport"
  content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
 
-<title>Mega Krav Mobile</title>
+<title>Mega Krav</title>
 
 <style>
 body{
@@ -100,7 +100,7 @@ let balbalot = false;
 
 let barTimer;
 let barWidth = 100;
-let barSpeed = 3;   // grows with rounds
+let barSpeed = 3;
 
 let playerMove,cpuMove;
 
@@ -130,7 +130,7 @@ const DECOY_BANK={
 };
 
 function getDecoys(w){
- return DECOY_BANK[w] || [w+"!", w+"?", w+"*"];
+ return DECOY_BANK[w] || [w+"!",w+"?",w+"*"];
 }
 
 // ===== RENDER =====
@@ -166,7 +166,6 @@ function startBar(){
 
   bar.style.width = barWidth+"%";
 
-  // color shift
   if(barWidth<50) bar.style.background="#ffaa00";
   if(barWidth<25) bar.style.background="#ff3333";
 
@@ -211,34 +210,25 @@ function korban(r){
  r+
  "\n\nCOMMAND:\nMAKE STUPID MISSION");
 
- renderButtons([
-  {t:"NEW GAME",ok:true}
- ]);
-
+ renderButtons([{t:"NEW GAME",ok:true}]);
  stage=-1;
 }
 
 function win(){
  show(TROPHY+
  "YOU WIN\nCOMPUTER מפסידן\n\nCOMMAND:\nDRINK!");
-
  end();
 }
 
 function lose(){
  show(BEER+
  "APOLOGIES\nYOU ARE מפסידן\n\nCOMMAND:\nDRINK!");
-
  end();
 }
 
 function end(){
  clearInterval(barTimer);
-
- renderButtons([
-  {t:"NEW GAME",ok:true}
- ]);
-
+ renderButtons([{t:"NEW GAME",ok:true}]);
  stage=-1;
 }
 
@@ -251,6 +241,29 @@ function handle(text,ok){
 
  if(!ok){
    korban("LANGUAGE ERROR");
+   return;
+ }
+
+ // ---- ARENA CHOICE ----
+ if(stage===30){
+   clearInterval(barTimer);
+
+   playerMove=text;
+
+   let opts = balbalot?
+     Object.keys(BAL):
+     Object.keys(ARENA);
+
+   cpuMove = opts[
+     Math.floor(Math.random()*opts.length)
+   ];
+
+   show(
+    "YOU: "+playerMove+
+    "\nCPU: "+cpuMove
+   );
+
+   setTimeout(resolve,700);
    return;
  }
 
@@ -352,7 +365,7 @@ function enterArena(){
 
  show("ARENA ROUND "+round);
 
- let opts=balbalot?
+ let opts = balbalot?
   Object.keys(BAL):
   Object.keys(ARENA);
 
@@ -364,13 +377,50 @@ function enterArena(){
  stage=30;
 }
 
+// ===== LOGIC =====
+function resolve(){
+
+ let table = balbalot?BAL:ARENA;
+
+ if(playerMove===cpuMove){
+   teko(); return;
+ }
+
+ if(table[playerMove]===cpuMove){
+   win(); return;
+ }
+
+ lose();
+}
+
+function teko(){
+ round++;
+
+ if(round===3){
+   balbalot=true;
+   show("שלב הבלבלות");
+ }
+
+ if(round>=4){
+   stage=99;
+   next();
+   return;
+ }
+
+ barSpeed+=1;
+
+ show("תיקו תיקו\nROUND "+round);
+
+ stage=4;
+ next();
+}
+
 // ===== START =====
 function start(){
  stage=0;
  round=1;
  balbalot=false;
  barSpeed=3;
-
  next();
 }
 
