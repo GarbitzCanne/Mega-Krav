@@ -21,13 +21,30 @@ body{
  padding:10px;
 }
 
+/* ===== TIME BAR ===== */
+#timeBarBox{
+ width:100%;
+ height:18px;
+ border:2px solid #33ff33;
+ margin-bottom:8px;
+}
+
+#timeBar{
+ height:100%;
+ width:100%;
+ background:#33ff33;
+ transition:width 0.05s linear;
+}
+
+/* ===== SCREEN ===== */
 #screen{
  border:2px solid #117711;
  background:#001100;
  padding:12px;
- min-height:22vh;
+ min-height:24vh;
  white-space:pre-line;
  font-size:18px;
+ margin-bottom:8px;
 }
 
 .btn{
@@ -45,9 +62,20 @@ body{
  font-size:22px;
 }
 
-#timer{
+.btn:active{
+ background:#004400;
+}
+
+/* ===== 8BIT ART ===== */
+.win{ color:#ffff33; }
+.lose{ color:#33ff33; }
+.korban{ color:#ff3366; }
+
+.art{
+ font-size:16px;
+ line-height:1.1;
  text-align:center;
- font-size:24px;
+ margin:6px 0;
 }
 </style>
 </head>
@@ -55,7 +83,10 @@ body{
 <body>
 <div id="app">
 
-<div id="timer">TIME</div>
+<div id="timeBarBox">
+ <div id="timeBar"></div>
+</div>
+
 <div id="screen"></div>
 <div id="buttons"></div>
 
@@ -66,48 +97,45 @@ body{
 let stage = 0;
 let round = 1;
 let balbalot = false;
-let speed = 6;
 
-let timer, timeLeft;
+let barTimer;
+let barWidth = 100;
+let barSpeed = 3;   // grows with rounds
 
-let playerMove, cpuMove;
+let playerMove,cpuMove;
 
 // ===== DATA =====
-const ARENA = {
+const ARENA={
  "בונגלו":"אוניה",
  "פיירבול":"בונגלו",
  "צונמי":"פיירבול",
  "אוניה":"צונמי"
 };
 
-const BAL = {
+const BAL={
  "לונגבו":"אוווניה",
  "פיירדד":"לונגבו",
  "נוצמי":"פיירדד",
  "אוווניה":"נוצמי"
 };
 
-// ===== SAFE DECOYS – NEVER IDENTICAL =====
-const DECOY_BANK = {
- "מגה קרב":["מגה קראב","מגה קרבה","מגע קרב"],
+// ===== DECOYS =====
+const DECOY_BANK={
+ "מגה קרב":["מגה קראב","מגע קרב","מגה קרבה"],
  "סופר קרב":["סופר קראב","סופ קרב","סופר כרב"],
  "מגה חרב":["מגה חרבה","מגע חרב","מגה חראב"],
- "סופר חרב":["סופר חרבה","סופר חראב","סופ חרב"],
+ "סופר חרב":["סופר חרבה","סופ חרב","סופר חראב"],
  "תיקו תיקו":["טיקו תיקו","תיקו תיק","טיקו טיקו"],
  "פטיבר עמוס":["פטיבר אמוס","פטיבר עמוש","פתיבר עמוס"]
 };
 
-function getDecoys(word){
- return DECOY_BANK[word] || [
-   word+"!",
-   word.split("").reverse().join(""),
-   word+"?"
- ];
+function getDecoys(w){
+ return DECOY_BANK[w] || [w+"!", w+"?", w+"*"];
 }
 
 // ===== RENDER =====
 function show(t){
- document.getElementById("screen").innerText=t;
+ document.getElementById("screen").innerHTML=t;
 }
 
 function renderButtons(list){
@@ -121,30 +149,67 @@ function renderButtons(list){
  document.getElementById("buttons").innerHTML=h;
 }
 
-// ===== TIMER =====
-function startTimer(){
- clearInterval(timer);
- timeLeft=speed;
+// ===== TIME BAR =====
+function startBar(){
 
- document.getElementById("timer").innerText=
-   "TIME: "+timeLeft;
+ clearInterval(barTimer);
 
- timer=setInterval(()=>{
-  timeLeft--;
-  document.getElementById("timer").innerText=
-   "TIME: "+timeLeft;
+ barWidth = 100;
+ const bar = document.getElementById("timeBar");
 
-  if(timeLeft<=0)
-    korban("TOO SLOW");
+ bar.style.width="100%";
+ bar.style.background="#33ff33";
 
- },1000);
+ barTimer=setInterval(()=>{
+
+  barWidth -= barSpeed;
+
+  bar.style.width = barWidth+"%";
+
+  // color shift
+  if(barWidth<50) bar.style.background="#ffaa00";
+  if(barWidth<25) bar.style.background="#ff3333";
+
+  if(barWidth<=0){
+   korban("TOO SLOW");
+  }
+
+ },120);
 }
 
-// ===== KORBAN =====
-function korban(r){
- clearInterval(timer);
+// ===== 8BIT ARTS =====
+const TROPHY=`
+<div class='art win'>
+   ______________
+  |  YOU WIN!!  |
+  |     🏆      |
+  |_____________|
+</div>`;
 
- show("HAHA YOU IS קורבן\n"+r);
+const BEER=`
+<div class='art lose'>
+   _______
+  | DRINK |
+  |  🍺   |
+  |_______|
+</div>`;
+
+const CRY=`
+<div class='art korban'>
+   _________
+  | KORBAN |
+  |  😭    |
+  |_______ |
+</div>`;
+
+// ===== ENDINGS =====
+function korban(r){
+ clearInterval(barTimer);
+
+ show(CRY+
+ "HAHA YOU IS קורבן\n"+
+ r+
+ "\n\nCOMMAND:\nMAKE STUPID MISSION");
 
  renderButtons([
   {t:"NEW GAME",ok:true}
@@ -153,12 +218,35 @@ function korban(r){
  stage=-1;
 }
 
-// ===== INPUT HANDLER =====
-function handle(text, ok){
+function win(){
+ show(TROPHY+
+ "YOU WIN\nCOMPUTER מפסידן\n\nCOMMAND:\nDRINK!");
+
+ end();
+}
+
+function lose(){
+ show(BEER+
+ "APOLOGIES\nYOU ARE מפסידן\n\nCOMMAND:\nDRINK!");
+
+ end();
+}
+
+function end(){
+ clearInterval(barTimer);
+
+ renderButtons([
+  {t:"NEW GAME",ok:true}
+ ]);
+
+ stage=-1;
+}
+
+// ===== INPUT =====
+function handle(text,ok){
 
  if(stage===-1){
-   start();
-   return;
+   start(); return;
  }
 
  if(!ok){
@@ -169,10 +257,9 @@ function handle(text, ok){
  next(text);
 }
 
-// ===== FLOW CONTROLLER =====
-function next(input){
+// ===== FLOW =====
+function next(){
 
-// 0 – CHALLENGE
 if(stage===0){
  show("PHASE 1\n"+
   (balbalot?"מגה חרב":"מגה קרב"));
@@ -180,16 +267,15 @@ if(stage===0){
  let w=balbalot?"מגה חרב":"מגה קרב";
 
  renderButtons([
-  {t:w, ok:true},
+  {t:w,ok:true},
   ...getDecoys(w).map(x=>({t:x,ok:false}))
  ]);
 
- startTimer();
+ startBar();
  stage=1;
  return;
 }
 
-// 1 – ACCEPT
 if(stage===1){
  show("PHASE 2\n"+
   (balbalot?"סופר חרב":"סופר קרב"));
@@ -197,16 +283,15 @@ if(stage===1){
  let w=balbalot?"סופר חרב":"סופר קרב";
 
  renderButtons([
-  {t:w, ok:true},
+  {t:w,ok:true},
   ...getDecoys(w).map(x=>({t:x,ok:false}))
  ]);
 
- startTimer();
+ startBar();
  stage=2;
  return;
 }
 
-// 2 – CHANT
 if(stage===2){
  show("CHANT\n"+
   (balbalot?
@@ -218,55 +303,51 @@ if(stage===2){
    "מגה מגה מגה קרב";
 
  renderButtons([
-  {t:w, ok:true},
+  {t:w,ok:true},
   {t:"מגה מגה קרב",ok:false},
   {t:"מגה מגה חרב",ok:false}
  ]);
 
- startTimer();
+ startBar();
  stage=3;
  return;
 }
 
-// 3 – ARENA  ⭐ FIXED HERE ⭐
 if(stage===3){
  enterArena();
  return;
 }
 
-// 4 – TEKO
 if(stage===4){
  show("תיקו תיקו");
 
  renderButtons([
   {t:"תיקו תיקו",ok:true},
   ...getDecoys("תיקו תיקו")
-    .map(x=>({t:x,ok:false}))
+   .map(x=>({t:x,ok:false}))
  ]);
 
- startTimer();
+ startBar();
  stage=0;
  return;
 }
 
-// 99 – SUDDEN
 if(stage===99){
  show("SUDDEN DEATH\nפטיבר עמוס");
 
  renderButtons([
   {t:"פטיבר עמוס",ok:true},
   ...getDecoys("פטיבר עמוס")
-    .map(x=>({t:x,ok:false}))
+   .map(x=>({t:x,ok:false}))
  ]);
 
- startTimer();
+ startBar();
  stage=100;
  return;
 }
-
 }
 
-// ===== ARENA LOGIC =====
+// ===== ARENA =====
 function enterArena(){
 
  show("ARENA ROUND "+round);
@@ -275,83 +356,12 @@ function enterArena(){
   Object.keys(BAL):
   Object.keys(ARENA);
 
- // ⭐ NO DECOYS IN ARENA ⭐
  renderButtons(
   opts.map(o=>({t:o,ok:true}))
  );
 
- startTimer();
+ startBar();
  stage=30;
-}
-
-function arenaSelect(move){
- playerMove=move;
-
- let opts=balbalot?
-  Object.keys(BAL):
-  Object.keys(ARENA);
-
- cpuMove=
-  opts[Math.floor(Math.random()*opts.length)];
-
- resolve();
-}
-
-function resolve(){
-
- let table=balbalot?BAL:ARENA;
-
- if(playerMove===cpuMove){
-  teko(); return;
- }
-
- if(table[playerMove]===cpuMove){
-  win(); return;
- }
-
- lose();
-}
-
-function win(){
- show("YOU WIN\nCOMPUTER מפסידן");
- end();
-}
-
-function lose(){
- show("YOU ARE מפסידן");
- end();
-}
-
-function teko(){
- round++;
-
- if(round===3){
-  balbalot=true;
-  show("שלב הבלבלות");
- }
-
- if(round>=4){
-  stage=99;
-  next();
-  return;
- }
-
- speed=Math.max(2,speed-1);
-
- show("תיקו תיקו\nROUND "+round);
-
- stage=4;
- next();
-}
-
-function end(){
- clearInterval(timer);
-
- renderButtons([
-  {t:"NEW GAME",ok:true}
- ]);
-
- stage=-1;
 }
 
 // ===== START =====
@@ -359,7 +369,7 @@ function start(){
  stage=0;
  round=1;
  balbalot=false;
- speed=6;
+ barSpeed=3;
 
  next();
 }
