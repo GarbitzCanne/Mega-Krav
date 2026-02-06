@@ -2,388 +2,402 @@
 <html dir="rtl">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
-<title>MEGA KRAV ARCADE</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<title>MEGA KRAV ARCADE: TURBO</title>
 
 <style>
-body{
- background:#000;
- color:#33ff33;
- font-family:Courier New,monospace;
- text-align:center;
- margin:0;
+:root {
+  --neon: #33ff33;
+  --bg: #050a05;
+  --glitch-red: #ff0033;
 }
 
-#app{
- max-width:420px;
- margin:auto;
- border:3px solid #33ff33;
- padding:10px;
+body {
+  background: #000;
+  color: var(--neon);
+  font-family: 'Courier New', monospace;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+  text-transform: uppercase;
 }
 
-#barBox{
- width:100%;
- height:14px;
- border:2px solid #33ff33;
- margin-bottom:8px;
+/* CRT SCANLINE OVERLAY */
+body::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), 
+              linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  z-index: 10;
+  background-size: 100% 3px, 3px 100%;
+  pointer-events: none;
 }
 
-#bar{
- width:100%;
- height:100%;
- background:#33ff33;
+#app {
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg);
+  padding: 15px;
+  border: 4px solid #222;
+  box-shadow: 0 0 30px rgba(0,255,0,0.2);
+  position: relative;
+  z-index: 5;
+  text-align: center;
 }
 
-#screen{
- min-height:200px;
- border:1px solid #115511;
- margin-bottom:8px;
- padding:10px;
- white-space:pre-line;
+#timeBarBox {
+  width: 100%;
+  height: 14px;
+  background: #001100;
+  border: 2px solid var(--neon);
+  margin-bottom: 12px;
 }
 
-.btn{
- width:100%;
- margin:4px 0;
- padding:14px;
- background:#112211;
- color:#33ff33;
- border:1px solid #33ff33;
- font-size:16px;
+#timeBar {
+  height: 100%;
+  width: 100%;
+  background: var(--neon);
+  transition: width 0.05s linear;
 }
+
+#screen {
+  border: 2px solid #113311;
+  background: #000;
+  padding: 20px;
+  min-height: 240px;
+  font-size: 20px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* THE PETIT BEURRE BOSS RENDER */
+.amos-sprite {
+  width: 140px;
+  height: auto;
+  image-rendering: pixelated;
+  border: 2px solid var(--neon);
+  margin: 10px 0;
+  filter: contrast(1.4) grayscale(1) sepia(1) hue-rotate(60deg) brightness(1.1);
+  box-shadow: 0 0 15px var(--neon);
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  padding: 16px;
+  background: #1a331a;
+  color: var(--neon);
+  border: none;
+  border-bottom: 5px solid #0a1a0a;
+  border-radius: 4px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.05s;
+}
+
+.btn:active {
+  transform: translateY(3px);
+  border-bottom: 1px solid #0a1a0a;
+}
+
+/* ANIMATIONS */
+.sprite { 
+  font-size: 16px; 
+  margin-bottom: 10px; 
+  line-height: 1.2;
+  font-family: monospace;
+}
+pre.sprite {
+  margin: 0;
+  white-space: pre;
+}
+.bounce { animation: bounce 0.5s infinite alternate; }
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+.spin { animation: spin 1s infinite linear; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.shake { animation: shake 0.2s infinite; }
+@keyframes shake { 0%, 100% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, -2px); } }
+.flash-yellow { animation: f-yellow 0.1s 3; }
+@keyframes f-yellow { 0%, 100% { background: #000; } 50% { background: #aa8800; } }
+.flash-red { animation: f-red 0.3s infinite; }
+@keyframes f-red { 0% { color: #ff0000; } 100% { color: #fff; } }
 </style>
-
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-
 </head>
-<body>
 
+<body>
 <div id="app">
-<div id="barBox"><div id="bar"></div></div>
+<div id="logo">MEGA KRAV X - JAPAN ARCADE 92</div>
+<div id="timeBarBox"><div id="timeBar"></div></div>
 <div id="screen"></div>
 <div id="buttons"></div>
-<div id="lobby"></div>
 </div>
 
 <script>
-// ===== DOM =====
-const screen=document.getElementById("screen");
-const buttonsDiv=document.getElementById("buttons");
-const barDiv=document.getElementById("bar");
-const lobby=document.getElementById("lobby");
-
 // ===== STATE =====
-let stage=0;
-let mode="single";
-let round=1;
-let speed=1;
-let lock=false;
+let stage=0, round=1, balbalot=false, lock=false;
+let barTimer=null, barWidth=100;
+let p,c;
+let suddenActive=false;
 
-let pMove=null;
-let oMove=null;
+// ===== TABLES =====
+const ARENA={ "בונגלו":"אוניה","פיירבול":"בונגלו","צונמי":"פיירבול","אוניה":"צונמי" };
+const BAL  ={ "לונגבו":"אוווניה","פיירדד":"לונגבו","נוצמי":"פיירדד","אוווניה":"נוצמי" };
 
-let peer=null;
-let conn=null;
-
-let barInt=null;
-let bar=100;
-
-// ===== RULES =====
-const RULES={
- "בונגלו":"אוניה",
- "פיירבול":"בונגלו",
- "צונמי":"פיירבול",
- "אוניה":"צונמי"
+const WORDS={
+ normal:{challenge:"מגה קרב",accept:"סופר קרב",chant:"מגה מגה מגה קרב"},
+ bal:{challenge:"מגה חרב",accept:"סופר חרב",chant:"מגה מגה מגה חרב"}
 };
 
-const BAL={
- "בונגלו":"לונגבו",
- "פיירבול":"פיירדד",
- "צונמי":"נוצמי",
- "אוניה":"אוווניה"
+const DECOY={
+ "מגה קרב":["מגה קראב","מגע קרב","מגה קרבה"],
+ "סופר קרב":["סופר קראב","סופ קרב","סופר כרב"],
+ "מגה מגה מגה קרב":["מגה מגה קרב"],
+ "תיקו תיקו":["טיקו תיקו","תיקו תיק","טיקו טיקו"],
+ "פטיבר עמוס":["פטיבר אמוס","פטיבר עמוש","פתיבר עמוס"]
 };
+
+function decoys(w){
+ let d=[...(DECOY[w]||[])];
+ while(d.length<2) d.push(w+"X");
+ return [...new Set(d)].slice(0,2);
+}
+
+// ===== AUDIO ENGINE =====
+let audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+let musicInterval;
+const ACTION_BASS = [164.81, 164.81, 196.00, 220.00];
+
+function beep(f,ms=120,type="square"){
+  let o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.type=type; o.frequency.value=f;
+  g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+ms/1000);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(); o.stop(audioCtx.currentTime+ms/1000);
+}
+
+function startMusic(){
+  stopMusic(); let i=0;
+  musicInterval=setInterval(()=>{
+    beep(ACTION_BASS[i%4], 200, "sawtooth");
+    if(i%2===0) beep(60, 50, "triangle");
+    i++;
+  }, 250 - (round*8));
+}
+function stopMusic(){ clearInterval(musicInterval); }
 
 // ===== UI =====
-function show(t){ screen.textContent=t; }
+const $=id=>document.getElementById(id);
+function show(h){$("screen").innerHTML=h;}
 
 function buttons(arr){
- let h="";
- arr.forEach(b=>{
-  h+=`<button class="btn" onclick="${b.f}">${b.t}</button>`;
- });
-
- h+=`<button class="btn" onclick="goMenu()">BACK TO MENU</button>`;
- buttonsDiv.innerHTML=h;
+ if(lock) return;
+ $("buttons").innerHTML=arr.map(b=>
+  `<button class='btn' onclick="press('${b.t}',${b.ok})">${b.t}</button>`
+ ).join("");
 }
 
-// ===== BAR =====
-function startBar(sec){
- clearInterval(barInt);
- bar=100;
+// ===== TIMER =====
+function startBar(){
+ clearInterval(barTimer); barWidth=100;
+ barTimer=setInterval(()=>{
+  barWidth-=3; $("timeBar").style.width=barWidth+"%";
+  if(barWidth<=0) korban("TOO SLOW");
+ },120);
+}
+function stopBar(){clearInterval(barTimer);}
 
- barInt=setInterval(()=>{
-   bar-=100/(sec*10);
-   if(bar<=0){
-     clearInterval(barInt);
-     korban("TIME FAIL");
-   }
-   barDiv.style.width=bar+"%";
- },100);
+// ===== ENDINGS =====
+function korban(r){
+ stopBar(); stopMusic(); lock=true;
+ beep(80, 500, "sawtooth");
+ show(`<pre class="sprite spin">
+  _____ 
+ /     \\
+|  X X  |
+|   ^   |
+ \\_____/
+  DEAD
+</pre>KORBAN!!<br>${r}`);
+ setTimeout(()=>buttons([{t:"NEW GAME",ok:true}]),1000);
+ stage=-1;
 }
 
-function stopBar(){
- clearInterval(barInt);
- barDiv.style.width="100%";
-}
-
-// ===== MENU =====
-function menu(){
- stage=0;
- show(
-"MEGA KRAV ARCADE\n\n"+
-"SELECT MODE"
- );
- buttons([
-  {t:"SINGLE PLAYER",f:"startSingle()"},
-  {t:"HOST MULTI",f:"host()"},
-  {t:"JOIN MULTI",f:"joinPrompt()"}
- ]);
-}
-
-function goMenu(){
- if(conn){
-   try{ conn.send({type:"ragequit"}); }catch(e){}
- }
-
- stopBar();
- stage=0;
- lock=false;
- pMove=oMove=null;
- round=1;
- speed=1;
-
- try{ if(conn) conn.close(); }catch(e){}
- try{ if(peer) peer.destroy(); }catch(e){}
-
- lobby.innerHTML="";
- menu();
-}
-
-// ===== SINGLE =====
-function startSingle(){
- mode="single";
- stage=1;
- challenge();
-}
-
-// ===== MULTI =====
-function host(){
- mode="multi-host";
- peer=new Peer();
-
- peer.on("open",id=>{
-   lobby.innerHTML="HOST CODE: "+id;
-   show("WAITING GUEST...");
- });
-
- peer.on("connection",c=>{
-   conn=c;
-   setupConn();
-   show("GUEST CONNECTED");
-   buttons([{t:"START",f:"sendStart()"}]);
- });
-}
-
-function joinPrompt(){
- let id=prompt("ENTER CODE");
- if(!id)return;
-
- mode="multi-guest";
- peer=new Peer();
-
- peer.on("open",()=>{
-   conn=peer.connect(id);
-   setupConn();
-   show("CONNECTING...");
- });
-}
-
-function setupConn(){
- conn.on("data",onData);
- conn.on("close",()=>korban("ENEMY DISCONNECT"));
-}
-
-function send(o){ if(conn) conn.send(o); }
-
-function onData(o){
- if(o.type==="start") challenge();
-
- if(o.type==="pick"){
-   oMove=o.v;
-   if(pMove) resolve();
- }
-
- if(o.type==="ragequit"){
-   show("ENEMY RAN AWAY\nKORBAN");
-   buttons([{t:"MENU",f:"goMenu()"}]);
- }
-}
-
-function sendStart(){
- send({type:"start"});
- challenge();
-}
-
-// ===== GAME FLOW =====
-function challenge(){
- stage=1;
- show("מגה קרב ?");
- startBar(4);
- buttons([{t:"סופר קרב",f:"chant()"}]);
-}
-
-function chant(){
- stage=2;
- stopBar();
- show("מגה מגה מגה קרב");
- startBar(3/speed);
- buttons([{t:"GO ARENA",f:"arena()"}]);
-}
-
-function arena(){
- stage=3;
- stopBar();
-
- let opts=["בונגלו","פיירבול","צונמי","אוניה"];
-
- if(round>=3){
-   opts=opts.map(x=>BAL[x]);
- }
-
- show("ARENA ROUND "+round);
-
- let arr=opts.map(o=>({
-   t:o,
-   f:`pick('${o}')`
- }));
-
- startBar(4/speed);
- buttons(arr);
-}
-
-// ===== PICK =====
-function pick(v){
- if(lock)return;
- lock=true;
- stopBar();
-
- pMove=v;
-
- if(mode==="single"){
-   let opts=Object.keys(RULES);
-   oMove=opts[Math.floor(Math.random()*4)];
-   resolve();
- }else{
-   send({type:"pick",v});
- }
-}
-
-// ===== RESOLVE =====
-function resolve(){
- lock=false;
-
- if(pMove===oMove){
-   draw();
-   return;
- }
-
- let p=pMove, o=oMove;
-
- for(let k in BAL){
-   if(BAL[k]===pMove) p=k;
-   if(BAL[k]===oMove) o=k;
- }
-
- if(RULES[p]===o) win();
- else if(RULES[o]===p) lose();
- else draw();
-}
-
-// ===== RESULTS =====
 function win(){
- show(
-"ASCII TROPHY\n"+
-"  \\o/\n"+
-"   |\n"+
-"  / \\\n\n"+
-"YOU WIN\nמפפסידן = ENEMY"
- );
- buttons([{t:"MENU",f:"goMenu()"}]);
+ stopBar(); stopMusic(); lock=true;
+ [523, 659, 784].forEach((f,i)=>setTimeout(()=>beep(f,150), i*100));
+ show(`<pre class="sprite bounce">
+  \\o/
+   |    GG EZ
+  / \\   
+ VICTORY
+</pre>YOU WIN!<br>COMPUTER LOSE`);
+ setTimeout(()=>buttons([{t:"DRINK & RESTART",ok:true}]),1200);
+ stage=-1;
 }
 
 function lose(){
- show(
-"ASCII CHASER\n"+
-"  >:-(\n\n"+
-"YOU LOSE\nמפפסידן = YOU\nDRINK!"
- );
- buttons([{t:"MENU",f:"goMenu()"}]);
+ stopBar(); stopMusic(); lock=true;
+ [200, 150, 100].forEach((f,i)=>setTimeout(()=>beep(f,200), i*150));
+ show(`<pre class="sprite shake">
+    ___
+   |   |
+   | _ |  
+   |___|
+  /|   |\\
+   LOSER
+  DRINK UP
+</pre>MAFSIDAN!<br>DRINK BEER`);
+ setTimeout(()=>buttons([{t:"RETRY",ok:true}]),1200);
+ stage=-1;
 }
 
-function draw(){
- round++;
+// ===== INPUT HANDLER – FIXED =====
+function press(t,ok){
+ if(stage===-1){ start(); return; }
+ if(!ok){ korban("WRONG INPUT"); return; }
 
- if(round===3){
-   balbalot();
+ // ★★ SUDDEN DEATH BOSS FIGHT ★★
+ if(stage===100){ 
+   if(!suddenActive) return;
+   suddenActive=false; 
+   stopBar();
+   win(); 
+   return; 
+ }
+
+ // ★★ ARENA FIGHT ★★
+ if(stage===30){
+   fight(t);
    return;
  }
 
- if(round>3){
-   sudden();
-   return;
+ next();
+}
+
+// ===== FLOW =====
+function next(){
+ lock=false;
+ const W=balbalot?WORDS.bal:WORDS.normal;
+
+ switch(stage){
+
+ case 0:
+   show(W.challenge);
+   buttons([{t:W.challenge,ok:true},...decoys(W.challenge).map(x=>({t:x,ok:false}))]);
+   startBar(); stage=1; break;
+
+ case 1:
+   show(W.accept);
+   buttons([{t:W.accept,ok:true},...decoys(W.accept).map(x=>({t:x,ok:false}))]);
+   startBar(); stage=2; break;
+
+ case 2:
+   show(W.chant);
+   buttons([{t:W.chant,ok:true},...decoys(W.chant).map(x=>({t:x,ok:false}))]);
+   startBar(); stage=3; break;
+
+ case 3:
+   enterArena(); break;
+
+ case 4:
+   show("TEKO TEKO!");
+   buttons([{t:"תיקו תיקו",ok:true},{t:"טיקו",ok:false},...decoys("תיקו תיקו").slice(1).map(x=>({t:x,ok:false}))]);
+   startBar(); stage=5; break;
+
+ case 5:
+   stage=0; next(); break;
+ }
+}
+
+// ===== ARENA =====
+function enterArena(){
+ show(`ARENA ROUND ${round}<br>FIGHT!`);
+ let opts=Object.keys(balbalot?BAL:ARENA);
+ buttons(opts.map(o=>({t:o,ok:true})));
+ startBar(); stage=30;
+}
+
+// ★★ הקרב האמיתי – FIXED ★★
+function fight(sel){
+ stopBar(); lock=true;
+ p=sel;
+
+ let opts=Object.keys(balbalot?BAL:ARENA);
+ c=opts[Math.floor(Math.random()*opts.length)];
+
+ show(`YOU: ${p}<br>CPU: <span class="shake">...</span>`);
+ setTimeout(()=>{
+   show(`YOU: ${p}<br>CPU: ${c}`);
+   setTimeout(resolve,800);
+ },600);
+}
+
+function resolve(){
+ let T=balbalot?BAL:ARENA;
+
+ if(p===c){
+   round++;
+   $("screen").classList.add("flash-yellow");
+   setTimeout(()=>$("screen").classList.remove("flash-yellow"), 300);
+   if(round===3) balbalot=true;
+
+   if(round>=4){
+     sudden(); return;
+   }
+
+   stage=4; next(); return;
  }
 
- show("תיקו תיקו");
- speed*=2;
- buttons([{t:"NEXT",f:"challenge()"}]);
+ (T[p]===c)?win():lose();
 }
 
-function balbalot(){
- show("שלב הבלבלות");
- speed*=2;
- buttons([{t:"ENTER BALBALOT",f:"challenge()"}]);
-}
-
-// ===== SUDDEN =====
+// ===== SUDDEN DEATH =====
 function sudden(){
- stage=6;
- show("SUDDEN DEATH\nפטיבר עמוס");
-
- startBar(3);
-
- buttons([
-  {t:"פטיבר עמוס",f:"suddenWin()"}
- ]);
+ const amosUrl = "https://img.mako.co.il/2016/05/26/petiber_i.jpg";
+ show(`
+   <div class="shake flash-red">!!! SUDDEN DEATH !!!</div>
+   <img src="${amosUrl}" class="amos-sprite">
+   <div class="flash">פטיבר עמוס</div>
+ `);
+ 
+ // CPU RACE - player must click correct button before CPU "clicks" it
+ suddenActive=true;
+ let cpuTime = 420 + Math.random() * 800;
+ setTimeout(()=>{ 
+   if(suddenActive){ 
+     suddenActive=false; 
+     lose(); 
+   }
+ }, cpuTime);
+ 
+ buttons([{t:"פטיבר עמוס",ok:true},...decoys("פטיבר עמוס").map(x=>({t:x,ok:false}))]);
+ startBar(); 
+ stage=100;
 }
 
-function suddenWin(){ win(); }
-
-// ===== KORBAN =====
-function korban(r){
- stopBar();
-
- show(
-"ASCII CRY\n"+
-" (T_T)\n\n"+
-"KORBAN\n"+r+
-"\nMAKE STUPID MISSION"
- );
-
- buttons([{t:"MENU",f:"goMenu()"}]);
+// ===== START =====
+function start(){
+ stage=0; round=1; balbalot=false; lock=false; suddenActive=false;
+ if(audioCtx.state==='suspended') audioCtx.resume();
+ startMusic();
+ next();
 }
 
-// ===== INIT =====
-menu();
+show("MEGA KRAV X<br><br>CLICK TO INSERT COIN");
+document.addEventListener("click",()=>start(),{once:true});
 </script>
 </body>
 </html>
