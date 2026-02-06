@@ -1,308 +1,367 @@
 <!DOCTYPE html>
-<html dir="rtl">
+<html>
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
-<title>MEGA KRAV X ONLINE</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MEGA KRAV</title>
 
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
 <style>
 body{
- background:#000;
+ background:#0a0a0f;
  color:#33ff33;
- font-family:Courier New, monospace;
+ font-family:monospace;
  text-align:center;
- margin:0;
 }
-#app{max-width:440px;margin:auto;padding:10px;}
+#screen{
+ min-height:180px;
+ border:2px solid #33ff33;
+ margin:10px;
+ padding:10px;
+ white-space:pre-line;
+}
 .btn{
- width:100%;margin:6px 0;
- padding:14px;background:#102010;
- color:#33ff33;border:1px solid #33ff33;
+ display:block;
+ width:90%;
+ margin:6px auto;
+ background:#001100;
+ color:#33ff33;
+ border:1px solid #33ff33;
+ padding:10px;
 }
-#bar{height:12px;background:#33ff33;width:100%;}
-pre{font-size:14px;}
+.bar{
+ height:12px;
+ background:#330000;
+ margin:6px;
+}
+.bar-inner{
+ height:12px;
+ background:#33ff33;
+ width:100%;
+}
 </style>
 </head>
 
 <body>
-<div id="app">
-<h3>MEGA KRAV X ONLINE</h3>
 
-<div id="menu"></div>
+<h2>MEGA KRAV ARCADE</h2>
+
+<div id="screen"></div>
+<div class="bar"><div id="bar" class="bar-inner"></div></div>
+
+<div id="buttons"></div>
 <div id="lobby"></div>
 
-<div id="bar"></div>
-<div id="screen"></div>
-<div id="buttons"></div>
-</div>
-
 <script>
-// ===== CORE STATE =====
-let mode="single"; // single / host / join
-let peer, conn;
-
-let stage=0, round=1, bal=false;
+// ====== CORE STATE ======
+let stage=0;       // 0 menu,1 challenge,2 chant,3 arena,4 result,5 balbalot,6 sudden
+let mode="single"; // single/multi-host/multi-guest
+let round=1;
+let speed=1;
 let lock=false;
 
-let timer=null, bar=100;
+let pMove=null;
+let oMove=null;
 
-let pMove=null, oMove=null;
+// network
+let peer=null;
+let conn=null;
 
-// ===== RULES =====
-const ARENA={
-"בונגלו":"אוניה",
-"פיירבול":"בונגלו",
-"צונמי":"פיירבול",
-"אוניה":"צונמי"
+// timer bar
+let barInt=null;
+let bar=100;
+
+// ====== RULES ======
+const RULES={
+ "בונגלו":"אוניה",
+ "פיירבול":"בונגלו",
+ "צונמי":"פיירבול",
+ "אוניה":"צונמי"
 };
 
 const BAL={
-"לונגבו":"אוווניה",
-"פיירדד":"לונגבו",
-"נוצמי":"פיירדד",
-"אוווניה":"נוצמי"
+ "בונגלו":"לונגבו",
+ "פיירבול":"פיירדד",
+ "צונמי":"נוצמי",
+ "אוניה":"אוווניה"
 };
 
-const WORD={
-n:{c:"מגה קרב",a:"סופר קרב",ch:"מגה מגה מגה קרב"},
-b:{c:"מגה חרב",a:"סופר חרב",ch:"מגה מגה מגה חרב"}
-};
+// ====== UI ======
+function show(t){ screen.innerHTML=t; }
 
-const DECOY={
-"מגה קרב":["מגע קרב","מגה קראב"],
-"סופר קרב":["סופר קראב","סופ קרב"],
-"מגה מגה מגה קרב":["מגה מגה קרב"],
-"תיקו תיקו":["טיקו תיקו","תיקו תיק"],
-"פטיבר עמוס":["פטיבר אמוס","פתיבר עמוס"]
-};
+function buttons(arr){
+ let h="";
+ arr.forEach(b=>{
+  h+=`<button class="btn" onclick="${b.f}">${b.t}</button>`;
+ });
 
-function d(w){
- return [{t:w,ok:true},
- ...(DECOY[w]||[]).map(x=>({t:x,ok:false}))];
+ // BACK תמיד קיים
+ h+=`<button class="btn" onclick="goMenu()">BACK TO MENU</button>`;
+ buttonsDiv.innerHTML=h;
 }
 
-// ===== UI =====
-const $=id=>document.getElementById(id);
-function show(h){$("screen").innerHTML=h;}
-
-function buttons(a){
- if(lock)return;
- $("buttons").innerHTML=a.map(b=>
- `<button class="btn" onclick="press('${b.t}',${b.ok})">${b.t}</button>`
- ).join("");
+// ====== BAR ======
+function startBar(sec,fail){
+ clearInterval(barInt);
+ bar=100;
+ barInt=setInterval(()=>{
+   bar-=100/(sec*10);
+   if(bar<=0){
+     clearInterval(barInt);
+     korban("TIME FAIL");
+   }
+   barDiv.style.width=bar+"%";
+ },100);
 }
 
-function startBar(){
- clearInterval(timer); bar=100;
- timer=setInterval(()=>{
-  bar-=3; $("bar").style.width=bar+"%";
-  if(bar<=0) korban("TIME");
- },120);
+function stopBar(){
+ clearInterval(barInt);
+ barDiv.style.width="100%";
 }
-function stopBar(){clearInterval(timer);}
 
-// ===== NETWORK =====
-function send(o){
- if(mode==="single")return;
- conn.send(o);
+// ====== MENU ======
+function menu(){
+ show(`WELCOME TO MEGA KRAV
+SELECT MODE`);
+ buttons([
+  {t:"SINGLE PLAYER",f:"startSingle()"},
+  {t:"HOST MULTI",f:"host()"},
+  {t:"JOIN MULTI",f:"joinPrompt()"}
+ ]);
 }
+
+function goMenu(){
+ // notify ragequit
+ if(conn){
+   try{ conn.send({type:"ragequit"}); }catch(e){}
+ }
+
+ stopBar();
+ stage=0;
+ lock=false;
+ pMove=oMove=null;
+ round=1;
+ speed=1;
+
+ try{ if(conn) conn.close(); }catch(e){}
+ try{ if(peer) peer.destroy(); }catch(e){}
+
+ lobby.innerHTML="";
+ menu();
+}
+
+// ====== SINGLE ======
+function startSingle(){
+ mode="single";
+ stage=1;
+ challenge();
+}
+
+// ====== MULTI ======
+function host(){
+ mode="multi-host";
+ peer=new Peer();
+ peer.on("open",id=>{
+   lobby.innerHTML="HOST CODE: "+id;
+   show("WAITING GUEST...");
+ });
+
+ peer.on("connection",c=>{
+   conn=c;
+   setupConn();
+   show("GUEST CONNECTED");
+   buttons([{t:"START",f:"sendStart()"}]);
+ });
+}
+
+function joinPrompt(){
+ let id=prompt("ENTER CODE");
+ if(!id)return;
+ mode="multi-guest";
+ peer=new Peer();
+
+ peer.on("open",()=>{
+   conn=peer.connect(id);
+   setupConn();
+   show("CONNECTING...");
+ });
+}
+
+function setupConn(){
+ conn.on("data",onData);
+ conn.on("close",()=>korban("ENEMY DISCONNECT"));
+}
+
+function send(o){ if(conn) conn.send(o); }
 
 function onData(o){
- if(o.type==="start") startGame();
- if(o.type==="pick") enemyPick(o.v);
- if(o.type==="stage") goto(o.v);
+ if(o.type==="start") challenge();
+
+ if(o.type==="pick"){
+   oMove=o.v;
+   if(pMove) resolve();
+ }
+
+ if(o.type==="ragequit"){
+   show("ENEMY RAN AWAY\nKORBAN");
+   buttons([{t:"MENU",f:"goMenu()"}]);
+ }
 }
 
-// ===== MENU =====
-function menu(){
- $("menu").innerHTML=`
- <button class=btn onclick="single()">SINGLE PLAYER</button>
- <button class=btn onclick="host()">HOST GAME</button>
- <button class=btn onclick="join()">JOIN GAME</button>`;
-}
-
-function single(){mode="single";startGame();}
-
-function host(){
- mode="host";
- peer=new Peer();
-
- peer.on('open',id=>{
-  $("lobby").innerHTML=
-  "קוד חדר:<br><b>"+id+"</b><br>ממתין לחיבור...";
- });
-
- peer.on('connection',c=>{
-  conn=c;
-  conn.on('data',onData);
-  lobbyReady();
- });
-}
-
-function join(){
- mode="join";
- let id=prompt("הכנס קוד חדר");
- peer=new Peer();
-
- peer.on('open',()=>{
-  conn=peer.connect(id);
-  conn.on('open',lobbyReady);
-  conn.on('data',onData);
- });
-}
-
-function lobbyReady(){
- $("lobby").innerHTML=
- `<button class=btn onclick="ready()">מוכן</button>`;
-}
-
-function ready(){
+function sendStart(){
  send({type:"start"});
- startGame();
+ challenge();
 }
 
-// ===== GAME FLOW =====
-function startGame(){
- $("menu").innerHTML="";
- $("lobby").innerHTML="";
-
- stage=0;round=1;bal=false;
- next();
+// ====== GAME FLOW ======
+function challenge(){
+ stage=1;
+ show("מגה קרב ?");
+ startBar(4,()=>korban("NO SUPER KRAV"));
+ buttons([{t:"סופר קרב",f:"chant()"}]);
 }
 
-function press(t,ok){
- if(stage===-1){startGame();return;}
-
- if(!ok){korban("WRONG");return;}
-
- if(stage===3){
-  pick(t);
-  return;
- }
-
- if(stage===99){
-  win();
-  send({type:"win"});
-  return;
- }
-
- next();
+function chant(){
+ stage=2;
+ stopBar();
+ show("מגה מגה מגה קרב");
+ startBar(3/speed,arena);
+ buttons([{t:"GO ARENA",f:"arena()"}]);
 }
 
-function next(){
- lock=false;
- const W=bal?WORD.b:WORD.n;
-
- switch(stage){
-
- case 0:
-  show(W.c);buttons(d(W.c));
-  startBar();stage=1;break;
-
- case 1:
-  show(W.a);buttons(d(W.a));
-  startBar();stage=2;break;
-
- case 2:
-  show(W.ch);buttons(d(W.ch));
-  startBar();stage=3;break;
-
- case 3:
-  arena();break;
-
- case 4:
-  show("תיקו תיקו");
-  buttons(d("תיקו תיקו"));
-  startBar();stage=5;break;
-
- case 5:
-  stage=0;next();break;
- }
-}
-
-// ===== ARENA =====
 function arena(){
+ stage=3;
+ stopBar();
+
+ let opts=["בונגלו","פיירבול","צונמי","אוניה"];
+
+ // balbalot mode
+ if(round>=3){
+   opts=opts.map(x=>BAL[x]);
+ }
+
  show("ARENA ROUND "+round);
 
- let opts=Object.keys(bal?BAL:ARENA);
- buttons(opts.map(x=>({t:x,ok:true})));
+ let arr=opts.map(o=>({
+   t:o,
+   f:`pick('${o}')`
+ }));
 
- startBar();
- stage=3;
+ startBar(4/speed,()=>korban("NO PICK"));
+ buttons(arr);
 }
 
 function pick(v){
+ if(lock)return;
+ lock=true;
  stopBar();
+
  pMove=v;
 
- if(mode!=="single"){
-  send({type:"pick",v});
- }
-
  if(mode==="single"){
-  let opts=Object.keys(bal?BAL:ARENA);
-  oMove=opts[Math.floor(Math.random()*opts.length)];
-  setTimeout(resolve,600);
+   let opts=Object.keys(RULES);
+   oMove=opts[Math.floor(Math.random()*4)];
+   resolve();
  }else{
-  show("נבחר: "+v+"<br>ממתין ליריב...");
+   send({type:"pick",v});
  }
-}
-
-function enemyPick(v){
- oMove=v;
- if(pMove)resolve();
 }
 
 function resolve(){
- let T=bal?BAL:ARENA;
+ lock=false;
 
+ // same
  if(pMove===oMove){
-  round++;
-
-  if(round===3)bal=true;
-
-  if(round>=4){
-   sudden();return;
-  }
-
-  stage=4;next();return;
+   draw();
+   return;
  }
 
- if(T[pMove]===oMove)win();
- else lose();
-}
+ // translate balbalot names
+ let p=pMove, o=oMove;
 
-// ===== SUDDEN =====
-function sudden(){
- show("SUDDEN DEATH - פטיבר עמוס");
- buttons(d("פטיבר עמוס"));
- startBar();
- stage=99;
-}
+ for(let k in BAL){
+   if(BAL[k]===pMove) p=k;
+   if(BAL[k]===oMove) o=k;
+ }
 
-// ===== END =====
-function korban(r){
- stopBar();lock=true;stage=-1;
- show("<pre> KORBAN </pre>"+r);
- buttons([{t:"NEW",ok:true}]);
+ if(RULES[p]===o) win();
+ else if(RULES[o]===p) lose();
+ else draw();
 }
 
 function win(){
- stopBar();lock=true;stage=-1;
- show("<pre> VICTORY </pre> DRINK!");
- buttons([{t:"AGAIN",ok:true}]);
+ show(`
+YOU WIN
+מפפסידן = ENEMY
+`);
+ buttons([{t:"MENU",f:"goMenu()"}]);
 }
 
 function lose(){
- stopBar();lock=true;stage=-1;
- show("<pre> MAFSIDAN </pre> DRINK!");
- buttons([{t:"AGAIN",ok:true}]);
+ show(`
+YOU LOSE
+מפפסידן = YOU
+DRINK!
+`);
+ buttons([{t:"MENU",f:"goMenu()"}]);
 }
 
-// ===== INIT =====
+function draw(){
+ round++;
+
+ if(round===3){
+   balbalot();
+   return;
+ }
+
+ if(round>3){
+   sudden();
+   return;
+ }
+
+ show("תיקו תיקו");
+ speed*=2;
+ buttons([{t:"NEXT",f:"challenge()"}]);
+}
+
+function balbalot(){
+ show("שלב הבלבלות");
+ speed*=2;
+ buttons([{t:"ENTER BALBALOT",f:"challenge()"}]);
+}
+
+function sudden(){
+ stage=6;
+ show("SUDDEN DEATH\nפטיבר עמוס");
+
+ startBar(3,()=>korban("SLOW PETIBER"));
+
+ buttons([
+  {t:"פטיבר עמוס",f:"suddenWin()"}
+ ]);
+}
+
+function suddenWin(){
+ win();
+}
+
+// ====== KORBAN ======
+function korban(r){
+ stopBar();
+ show(`
+KORBAN
+${r}
+
+MAKE STUPID MISSION
+`);
+ buttons([{t:"MENU",f:"goMenu()"}]);
+}
+
+// ====== INIT ======
 menu();
+
 </script>
+
 </body>
 </html>
