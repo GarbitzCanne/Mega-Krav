@@ -19,18 +19,19 @@ body{
  max-width:480px;
  margin:auto;
  padding:10px;
+
  border:4px solid #225522;
  box-shadow:0 0 20px #00ff00;
 }
 
-/* HEADER */
+/* ===== HEADER ===== */
 #logo{
  white-space:pre;
  text-align:center;
  margin-bottom:6px;
 }
 
-/* BAR */
+/* ===== BAR ===== */
 #timeBarBox{
  width:100%;
  height:18px;
@@ -45,7 +46,7 @@ body{
  transition:width 0.05s linear;
 }
 
-/* SCREEN */
+/* ===== SCREEN ===== */
 #screen{
  border:2px solid #117711;
  background:#001100;
@@ -72,15 +73,21 @@ body{
  touch-action:manipulation;
 }
 
-.btn:active{ background:#004400; }
+.btn:active{
+ background:#004400;
+}
 
+/* ===== ASCII ===== */
 .art{
  white-space:pre;
  text-align:center;
  margin:6px 0;
 }
 
-.flash{ animation:flash .3s infinite; }
+.flash{
+ animation:flash .3s infinite;
+}
+
 @keyframes flash{
  0%{background:#ff0000}
  50%{background:#330000}
@@ -110,14 +117,20 @@ body{
 
 <script>
 // ===== STATE =====
-let stage=0, round=1, balbalot=false;
-let barTimer, barWidth=100, barSpeed=3;
+let stage=0;
+let round=1;
+let balbalot=false;
+
+let barTimer;
+let barWidth=100;
+let barSpeed=3;
 
 let playerMove,cpuMove;
+
 let suddenActive=false;
 let lockInput=false;
 
-// ===== ASCII =====
+// ===== ASCII ART =====
 const ART_WIN=`
 ╔══════════════╗
 ║  YOU WIN!!   ║
@@ -140,4 +153,387 @@ const ART_KORBAN=`
 // ===== RULES =====
 const ARENA={
  "בונגלו":"אוניה",
- "פ
+ "פיירבול":"בונגלו",
+ "צונמי":"פיירבול",
+ "אוניה":"צונמי"
+};
+
+const BAL={
+ "לונגבו":"אוווניה",
+ "פיירדד":"לונגבו",
+ "נוצמי":"פיירדד",
+ "אוווניה":"נוצמי"
+};
+
+// ===== DECOYS =====
+const DECOY_BANK={
+ "מגה קרב":["מגה קראב","מגע קרב","מגה קרבה"],
+ "סופר קרב":["סופר קראב","סופ קרב","סופר כרב"],
+ "מגה חרב":["מגה חרבה","מגע חרב","מגה חראב"],
+ "סופר חרב":["סופר חרבה","סופ חרב","סופר חראב"],
+ "תיקו תיקו":["טיקו תיקו","תיקו תיק","טיקו טיקו"],
+ "פטיבר עמוס":["פטיבר אמוס","פטיבר עמוש","פתיבר עמוס"]
+};
+
+function getDecoys(w){
+ let d=[...(DECOY_BANK[w]||[])];
+
+ while(d.length<3){
+  d.push(w+Math.random().toString(36).slice(2,4));
+ }
+
+ return [...new Set(d)].slice(0,3);
+}
+
+// ===== RENDER =====
+function show(t){
+ document.getElementById("screen").innerHTML=t;
+}
+
+function renderButtons(list){
+
+ if(lockInput) return;
+
+ let h="";
+ list.forEach(b=>{
+  h+=`<div class='btn'
+       onclick="handle('${b.t}',${b.ok})">
+       ${b.t}
+      </div>`;
+ });
+
+ document.getElementById("buttons").innerHTML=h;
+}
+
+// ===== BAR =====
+function stopBar(){
+ clearInterval(barTimer);
+}
+
+function startBar(){
+
+ stopBar();
+
+ barWidth=100;
+
+ const bar=document.getElementById("timeBar");
+ bar.className="";
+ bar.style.width="100%";
+
+ barTimer=setInterval(()=>{
+
+  barWidth-=barSpeed;
+  bar.style.width=barWidth+"%";
+
+  if(barWidth<25){
+   bar.className="flash";
+  }
+
+  if(barWidth<=0){
+   korban("TOO SLOW");
+  }
+
+ },120);
+}
+
+// ===== ENDINGS =====
+function korban(r){
+
+ stopBar();
+ lockInput=true;
+
+ show(
+ ART_KORBAN+
+ "\nHAHA YOU IS קורבן\n"+
+ r+
+ "\n\nCOMMAND:\nMAKE STUPID MISSION"
+ );
+
+ renderButtons([
+  {t:"NEW GAME",ok:true}
+ ]);
+
+ stage=-1;
+}
+
+function win(){
+
+ stopBar();
+ lockInput=true;
+
+ show(
+ ART_WIN+
+ "\nYOU WIN\nCOMPUTER מפסידן\n\nCOMMAND:\nDRINK!"
+ );
+
+ renderButtons([
+  {t:"NEW GAME",ok:true}
+ ]);
+
+ stage=-1;
+}
+
+function lose(){
+
+ stopBar();
+ lockInput=true;
+
+ show(
+ ART_LOSE+
+ "\nAPOLOGIES\nYOU ARE מפסידן\n\nCOMMAND:\nDRINK!"
+ );
+
+ renderButtons([
+  {t:"NEW GAME",ok:true}
+ ]);
+
+ stage=-1;
+}
+
+// ===== INPUT =====
+function handle(text,ok){
+
+ if(stage===-1){
+  start();
+  return;
+ }
+
+ if(!ok){
+  korban("LANGUAGE ERROR");
+  return;
+ }
+
+ // ===== SUDDEN DEATH =====
+ if(stage===100){
+
+  if(!suddenActive) return;
+
+  suddenActive=false;
+
+  // player clicked first
+  win();
+  return;
+ }
+
+ // ===== ARENA =====
+ if(stage===30){
+
+  stopBar();
+
+  playerMove=text;
+
+  let opts = balbalot ?
+   Object.keys(BAL) :
+   Object.keys(ARENA);
+
+  cpuMove = opts[
+   Math.floor(Math.random()*opts.length)
+  ];
+
+  show(
+   "=== VS ===\n"+
+   "YOU: "+playerMove+
+   "\nCPU: ???"
+  );
+
+  setTimeout(()=>{
+   show(
+    "YOU: "+playerMove+
+    "\nCPU: "+cpuMove
+   );
+   resolve();
+  },800);
+
+  return;
+ }
+
+ next();
+}
+
+// ===== FLOW =====
+function next(){
+
+lockInput=false;
+
+if(stage===0){
+
+ show("PHASE 1\n"+
+  (balbalot?"מגה חרב":"מגה קרב"));
+
+ let w=balbalot?"מגה חרב":"מגה קרב";
+
+ renderButtons([
+  {t:w,ok:true},
+  ...getDecoys(w).map(x=>({t:x,ok:false}))
+ ]);
+
+ startBar();
+ stage=1;
+ return;
+}
+
+if(stage===1){
+
+ show("PHASE 2\n"+
+  (balbalot?"סופר חרב":"סופר קרב"));
+
+ let w=balbalot?"סופר חרב":"סופר קרב";
+
+ renderButtons([
+  {t:w,ok:true},
+  ...getDecoys(w).map(x=>({t:x,ok:false}))
+ ]);
+
+ startBar();
+ stage=2;
+ return;
+}
+
+if(stage===2){
+
+ show("CHANT\n"+
+  (balbalot?
+   "מגה מגה מגה חרב":
+   "מגה מגה מגה קרב"));
+
+ let w=balbalot?
+   "מגה מגה מגה חרב":
+   "מגה מגה מגה קרב";
+
+ renderButtons([
+  {t:w,ok:true},
+  {t:"מגה מגה קרב",ok:false},
+  {t:"מגה מגה חרב",ok:false}
+ ]);
+
+ startBar();
+ stage=3;
+ return;
+}
+
+if(stage===3){
+ enterArena();
+ return;
+}
+
+if(stage===4){
+
+ show("תיקו תיקו");
+
+ renderButtons([
+  {t:"תיקו תיקו",ok:true},
+  ...getDecoys("תיקו תיקו")
+   .map(x=>({t:x,ok:false}))
+ ]);
+
+ startBar();
+ stage=0;
+ return;
+}
+
+if(stage===99){
+
+ show("SUDDEN DEATH\nפטיבר עמוס");
+
+ suddenActive=true;
+
+ // CPU race timer
+ let cpuTime=400+Math.random()*900;
+
+ setTimeout(()=>{
+  if(suddenActive){
+   suddenActive=false;
+   lose();   // cpu was faster
+  }
+ },cpuTime);
+
+ renderButtons([
+  {t:"פטיבר עמוס",ok:true},
+  ...getDecoys("פטיבר עמוס")
+   .map(x=>({t:x,ok:false}))
+ ]);
+
+ startBar();
+ stage=100;
+ return;
+}
+
+}
+
+// ===== ARENA =====
+function enterArena(){
+
+ show("ARENA ROUND "+round);
+
+ let opts=balbalot?
+  Object.keys(BAL):
+  Object.keys(ARENA);
+
+ renderButtons(
+  opts.map(o=>({t:o,ok:true}))
+ );
+
+ startBar();
+ stage=30;
+}
+
+// ===== LOGIC =====
+function resolve(){
+
+ let table=balbalot?BAL:ARENA;
+
+ if(playerMove===cpuMove){
+  teko();
+  return;
+ }
+
+ if(table[playerMove]===cpuMove){
+  win();
+  return;
+ }
+
+ lose();
+}
+
+function teko(){
+
+ round++;
+
+ if(round===3){
+  balbalot=true;
+  show("שלב הבלבלות");
+ }
+
+ if(round>=4){
+  stage=99;
+  next();
+  return;
+ }
+
+ barSpeed+=1;
+
+ show("תיקו תיקו\nROUND "+round);
+
+ stage=4;
+ next();
+}
+
+// ===== START =====
+function start(){
+
+ stage=0;
+ round=1;
+ balbalot=false;
+
+ barSpeed=3;
+ suddenActive=false;
+ lockInput=false;
+
+ next();
+}
+
+start();
+</script>
+
+</body>
+</html>
