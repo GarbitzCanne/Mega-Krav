@@ -84,7 +84,7 @@ body::before {
 .amos-sprite {
   width: 140px;
   height: auto;
-  image-rendering: pixelated; /* THE 8-BIT LOOK */
+  image-rendering: pixelated;
   border: 2px solid var(--neon);
   margin: 10px 0;
   filter: contrast(1.4) grayscale(1) sepia(1) hue-rotate(60deg) brightness(1.1);
@@ -149,6 +149,7 @@ pre.sprite {
 let stage=0, round=1, balbalot=false, lock=false;
 let barTimer=null, barWidth=100;
 let p,c;
+let suddenActive=false;
 
 // ===== TABLES =====
 const ARENA={ "בונגלו":"אוניה","פיירבול":"בונגלו","צונמי":"פיירבול","אוניה":"צונמי" };
@@ -160,10 +161,11 @@ const WORDS={
 };
 
 const DECOY={
- "מגה קרב":["מגה קראב","מגע קרב"],
- "סופר קרב":["סופר קראב","סופ קרב"],
+ "מגה קרב":["מגה קראב","מגע קרב","מגה קרבה"],
+ "סופר קרב":["סופר קראב","סופ קרב","סופר כרב"],
  "מגה מגה מגה קרב":["מגה מגה קרב"],
- "פטיבר עמוס":["פטיבר אמוס"]
+ "תיקו תיקו":["טיקו תיקו","תיקו תיק","טיקו טיקו"],
+ "פטיבר עמוס":["פטיבר אמוס","פטיבר עמוש","פתיבר עמוס"]
 };
 
 function decoys(w){
@@ -212,7 +214,7 @@ function startBar(){
  clearInterval(barTimer); barWidth=100;
  barTimer=setInterval(()=>{
   barWidth-=3; $("timeBar").style.width=barWidth+"%";
-  if(barWidth<=0) korban("נגמר הזמן");
+  if(barWidth<=0) korban("TOO SLOW");
  },120);
 }
 function stopBar(){clearInterval(barTimer);}
@@ -228,10 +230,11 @@ function korban(r){
 |   ^   |
  \\_____/
   DEAD
-</pre>קורבן!<br>${r}`);
- setTimeout(()=>buttons([{t:"חדש",ok:true}]),1000);
+</pre>KORBAN!!<br>${r}`);
+ setTimeout(()=>buttons([{t:"NEW GAME",ok:true}]),1000);
  stage=-1;
 }
+
 function win(){
  stopBar(); stopMusic(); lock=true;
  [523, 659, 784].forEach((f,i)=>setTimeout(()=>beep(f,150), i*100));
@@ -240,10 +243,11 @@ function win(){
    |    GG EZ
   / \\   
  VICTORY
-</pre>ניצחון!`);
- setTimeout(()=>buttons([{t:"שוב",ok:true}]),1200);
+</pre>YOU WIN!<br>COMPUTER LOSE`);
+ setTimeout(()=>buttons([{t:"DRINK & RESTART",ok:true}]),1200);
  stage=-1;
 }
+
 function lose(){
  stopBar(); stopMusic(); lock=true;
  [200, 150, 100].forEach((f,i)=>setTimeout(()=>beep(f,200), i*150));
@@ -255,24 +259,28 @@ function lose(){
   /|   |\\
    LOSER
   DRINK UP
-</pre>מפסידן!`);
- setTimeout(()=>buttons([{t:"שוב",ok:true}]),1200);
+</pre>MAFSIDAN!<br>DRINK BEER`);
+ setTimeout(()=>buttons([{t:"RETRY",ok:true}]),1200);
  stage=-1;
 }
 
 // ===== INPUT HANDLER – FIXED =====
 function press(t,ok){
  if(stage===-1){ start(); return; }
- if(!ok){ korban("טעות"); return; }
+ if(!ok){ korban("WRONG INPUT"); return; }
 
- // ★★ הקריטי ★★
+ // ★★ SUDDEN DEATH BOSS FIGHT ★★
+ if(stage===100){ 
+   if(!suddenActive) return;
+   suddenActive=false; 
+   stopBar();
+   win(); 
+   return; 
+ }
+
+ // ★★ ARENA FIGHT ★★
  if(stage===30){
    fight(t);
-   return;
- }
- 
- if(stage===100){
-   win();
    return;
  }
 
@@ -305,8 +313,8 @@ function next(){
    enterArena(); break;
 
  case 4:
-   show("תיקו!");
-   buttons([{t:"תיקו תיקו",ok:true},{t:"טיקו",ok:false}]);
+   show("TEKO TEKO!");
+   buttons([{t:"תיקו תיקו",ok:true},{t:"טיקו",ok:false},...decoys("תיקו תיקו").slice(1).map(x=>({t:x,ok:false}))]);
    startBar(); stage=5; break;
 
  case 5:
@@ -316,7 +324,7 @@ function next(){
 
 // ===== ARENA =====
 function enterArena(){
- show(`ארנה סיבוב ${round}`);
+ show(`ARENA ROUND ${round}<br>FIGHT!`);
  let opts=Object.keys(balbalot?BAL:ARENA);
  buttons(opts.map(o=>({t:o,ok:true})));
  startBar(); stage=30;
@@ -330,9 +338,9 @@ function fight(sel){
  let opts=Object.keys(balbalot?BAL:ARENA);
  c=opts[Math.floor(Math.random()*opts.length)];
 
- show(`אתה: ${p}<br>CPU: <span class="shake">...</span>`);
+ show(`YOU: ${p}<br>CPU: <span class="shake">...</span>`);
  setTimeout(()=>{
-   show(`אתה: ${p}<br>CPU: ${c}`);
+   show(`YOU: ${p}<br>CPU: ${c}`);
    setTimeout(resolve,800);
  },600);
 }
@@ -364,13 +372,25 @@ function sudden(){
    <img src="${amosUrl}" class="amos-sprite">
    <div class="flash">פטיבר עמוס</div>
  `);
+ 
+ // CPU RACE - player must click correct button before CPU "clicks" it
+ suddenActive=true;
+ let cpuTime = 420 + Math.random() * 800;
+ setTimeout(()=>{ 
+   if(suddenActive){ 
+     suddenActive=false; 
+     lose(); 
+   }
+ }, cpuTime);
+ 
  buttons([{t:"פטיבר עמוס",ok:true},...decoys("פטיבר עמוס").map(x=>({t:x,ok:false}))]);
- startBar(); stage=100;
+ startBar(); 
+ stage=100;
 }
 
 // ===== START =====
 function start(){
- stage=0; round=1; balbalot=false; lock=false;
+ stage=0; round=1; balbalot=false; lock=false; suddenActive=false;
  if(audioCtx.state==='suspended') audioCtx.resume();
  startMusic();
  next();
