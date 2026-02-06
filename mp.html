@@ -1,316 +1,259 @@
 <!DOCTYPE html>
 <html dir="rtl">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-<title>MEGA KRAV: ONLINE</title>
-<style>
-/* --- REUSING YOUR EXACT STYLES FOR CONSISTENCY --- */
-:root { --neon: #33ff33; --bg: #050a05; --glitch-red: #ff0033; }
-body { background: #000; color: var(--neon); font-family: 'Courier New', monospace; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; text-transform: uppercase; }
-body::before { content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)); z-index: 10; background-size: 100% 3px, 3px 100%; pointer-events: none; }
-#app { width: 100%; max-width: 440px; background: var(--bg); padding: 15px; border: 4px solid #222; box-shadow: 0 0 30px rgba(0,255,0,0.2); position: relative; z-index: 5; text-align: center; }
-#lobby { display: block; }
-#game { display: none; }
-input { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 10px; font-family: inherit; font-size: 18px; width: 80%; text-align: center; margin-bottom: 10px; }
-.btn { display: block; width: 100%; margin: 8px 0; padding: 16px; background: #1a331a; color: var(--neon); border: none; border-bottom: 5px solid #0a1a0a; font-size: 18px; font-weight: bold; cursor: pointer; }
-.btn:active { transform: translateY(3px); border-bottom: 1px solid #0a1a0a; }
-#status { margin: 15px 0; color: yellow; min-height: 24px; white-space: pre-wrap; }
-#screen { border: 2px solid #113311; background: #000; padding: 20px; min-height: 220px; font-size: 20px; margin-bottom: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-#timeBarBox { width: 100%; height: 14px; background: #001100; border: 2px solid var(--neon); margin-bottom: 12px; }
-#timeBar { height: 100%; width: 100%; background: var(--neon); transition: width 0.05s linear; }
-.amos-sprite { width: 120px; image-rendering: pixelated; border: 2px solid var(--neon); filter: contrast(1.4) grayscale(1) sepia(1) hue-rotate(60deg); }
-.flash-yellow { animation: f-yellow 0.1s 3; } @keyframes f-yellow { 0%, 100% { background: #000; } 50% { background: #aa8800; } }
-</style>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+    <title>MEGA KRAV: MULTIPLAYER</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+        :root { --neon: #39ff14; --danger: #ff0033; --warn: #ffcc00; --bg: #050a05; }
+        body { background: #000; color: var(--neon); font-family: 'VT323', monospace; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; text-transform: uppercase; }
+        body::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.04)); z-index: 100; pointer-events: none; background-size: 100% 3px, 3px 100%; }
+        #app { width: 90%; max-width: 420px; background: var(--bg); padding: 15px; border: 4px solid var(--neon); box-shadow: 0 0 20px var(--neon); position: relative; z-index: 5; text-align: center; }
+        #screen { border: 2px solid #113311; background: #000; padding: 10px; min-height: 280px; font-size: 22px; margin-bottom: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; white-space: pre-wrap; }
+        #timeBarBox { width: 100%; height: 14px; background: #111; border: 2px solid var(--neon); margin-bottom: 10px; }
+        #timeBar { height: 100%; width: 100%; background: var(--neon); transition: width 0.1s linear; }
+        .btn { display: block; width: 100%; margin: 5px 0; padding: 10px; background: #0a1a0a; color: var(--neon); border: 2px solid var(--neon); font-family: 'VT323'; font-size: 20px; cursor: pointer; }
+        .btn:hover { background: var(--neon); color: #000; }
+        .shame-text { font-size: 45px; text-shadow: 0 0 15px red; animation: glitch 0.1s infinite; }
+        @keyframes glitch { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, -2px); } 100% { transform: translate(2px, -2px); } }
+        .amos-img { width: 100px; height: 100px; border: 2px solid var(--danger); image-rendering: pixelated; margin-bottom: 10px; }
+        .flash-yellow { background: rgba(255, 204, 0, 0.4) !important; }
+        .balbalot-shake { animation: shake-heavy 0.2s infinite; border-color: var(--danger) !important; }
+        @keyframes shake-heavy { 0% { transform: translate(1px, 1px); } 20% { transform: translate(-2px, -1px); } 100% { transform: translate(-1px, 2px); } }
+        input { background: #000; border: 1px solid var(--neon); color: var(--neon); padding: 5px; font-family: 'VT323'; font-size: 18px; width: 80%; margin-bottom: 10px; }
+    </style>
 </head>
 <body>
-
 <div id="app">
-  <div id="lobby">
-    <div style="font-size: 24px; margin-bottom: 20px; border-bottom: 2px solid var(--neon); padding-bottom: 10px;">NET-PLAY MODE</div>
-    <div id="status">CHOOSE MODE</div>
-    <div id="hostControls">
-      <button class="btn" onclick="initHost()">HOST GAME</button>
-      <button class="btn" onclick="showJoin()">JOIN GAME</button>
-    </div>
-    <div id="joinControls" style="display:none">
-      <input type="text" id="joinInput" placeholder="ENTER CODE">
-      <button class="btn" onclick="joinGame()">CONNECT</button>
-      <button class="btn" onclick="location.reload()">BACK</button>
-    </div>
-  </div>
-
-  <div id="game">
+    <div id="status" style="font-size:12px; margin-bottom: 5px;">KRAV_NET // DISCONNECTED</div>
     <div id="timeBarBox"><div id="timeBar"></div></div>
     <div id="screen"></div>
     <div id="buttons"></div>
-  </div>
 </div>
 
 <script>
-// --- NETWORK VARS ---
+const $ = id => document.getElementById(id);
 let peer, conn;
-let myId, hostId;
-let isHost = false;
-let myMove = null;
-let oppMove = null;
+let isHost = false, myReady = false, peerReady = false, rematchRequest = false;
+let stage = 0, round = 1, balbalot = false, barTimer, barWidth = 100;
+let pChoice = null, oChoice = null, suddenActive = false;
 
-// --- GAME VARS ---
-let stage=0, round=1, balbalot=false;
-let barTimer=null, barWidth=100;
-const AMOS_URL = "https://img.mako.co.il/2016/05/26/petiber_i.jpg";
+const MOVES = { NORMAL: ["בונגלו", "פיירבול", "צונמי", "אונייה"], BAL: ["לונגבו", "פיירדד", "נוצמי", "אוווניה"] };
 
-// --- TABLES ---
-const ARENA={ "בונגלו":"אוניה","פיירבול":"בונגלו","צונמי":"פיירבול","אוניה":"צונמי" };
-const BAL={ "לונגבו":"אוווניה","פיירדד":"לונגבו","נוצמי":"פיירדד","אוווניה":"נוצמי" };
-const WORDS={
- normal:{challenge:"מגה קרב",accept:"סופר קרב",chant:"מגה מגה מגה קרב"},
- bal:{challenge:"מגה חרב",accept:"סופר חרב",chant:"מגה מגה מגה חרב"}
-};
-const DECOY={
- "מגה קרב":["מגה קראב","מגע קרב","מגה קרבה"],"סופר קרב":["סופר קראב","סופ קרב","סופר כרב"],
- "מגה מגה מגה קרב":["מגה מגה קרב"],"תיקו תיקו":["טיקו תיקו","תיקו תיק"],
- "פטיבר עמוס":["פטיבר אמוס","פטיבר עמוש","פתיבר עמוס"]
-};
-
-// --- AUDIO (Simplified) ---
-let audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-function beep(f,ms=100){
-  if(audioCtx.state==='suspended') audioCtx.resume();
-  let o=audioCtx.createOscillator(), g=audioCtx.createGain();
-  o.type="square"; o.frequency.value=f;
-  g.gain.setValueAtTime(0.1, audioCtx.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+ms/1000);
-  o.connect(g); g.connect(audioCtx.destination);
-  o.start(); o.stop(audioCtx.currentTime+ms/1000);
+// --- CONNECTION LOGIC ---
+function initMenu() {
+    $("screen").innerHTML = "MEGA KRAV MP\nSELECT MODE";
+    btns([
+        {t: "HOST GAME", fn: hostGame},
+        {t: "JOIN GAME", fn: joinMenu},
+        {t: "BACK TO MENU", fn: () => window.location.href='index.html'}
+    ]);
 }
 
-// --- LOBBY LOGIC ---
-function setStatus(msg){ document.getElementById("status").innerText = msg; }
-
-function initHost(){
-    setStatus("GENERATING CODE...");
+function hostGame() {
+    isHost = true;
     peer = new Peer();
-    peer.on('open', (id) => {
-        myId = id;
-        isHost = true;
-        document.getElementById("hostControls").innerHTML = `
-            <div>YOUR CODE:</div>
-            <div style="font-size:30px; margin:15px; color:#fff; border:2px dashed var(--neon); padding:10px; user-select:text;">${id}</div>
-            <div style="font-size:14px; color:#aaa;">SHARE THIS WITH PLAYER 2</div>
-        `;
+    peer.on('open', id => {
+        $("screen").innerHTML = `ID שלך:\n<b style="color:white; font-size:30px">${id}</b>\n\nשלח ליריב...`;
+        $("status").innerText = "WAITING FOR CONNECTION...";
     });
-    peer.on('connection', (c) => {
-        conn = c;
-        setupConnection();
-    });
+    peer.on('connection', c => setupConn(c));
 }
 
-function showJoin(){
-    document.getElementById("hostControls").style.display="none";
-    document.getElementById("joinControls").style.display="block";
+function joinMenu() {
+    $("screen").innerHTML = `הכנס ID של המארח:`;
+    const input = document.createElement("input");
+    input.id = "peerIdInput";
+    $("screen").appendChild(input);
+    btns([{t: "CONNECT", fn: () => {
+        const id = $("peerIdInput").value;
+        peer = new Peer();
+        setupConn(peer.connect(id));
+    }}]);
 }
 
-function joinGame(){
-    hostId = document.getElementById("joinInput").value.trim();
-    if(!hostId) return;
-    setStatus("CONNECTING...");
-    peer = new Peer();
-    peer.on('open', () => {
-        conn = peer.connect(hostId);
-        setupConnection();
-    });
-}
-
-function setupConnection(){
+function setupConn(c) {
+    conn = c;
     conn.on('open', () => {
-        setStatus("CONNECTED!");
-        setTimeout(startGameUI, 1000);
+        $("status").innerText = "CONNECTED";
+        showReadyScreen();
     });
-    conn.on('data', (data) => handleData(data));
+    conn.on('data', data => handleData(data));
+    conn.on('close', () => onOpponentLeft());
 }
 
-function handleData(data){
-    if(data.type === 'DIE') { win("OPPONENT DIED"); }
-    if(data.type === 'WIN') { lose("OPPONENT WON"); }
-    if(data.type === 'MOVE') { 
-        oppMove = data.val;
-        if(myMove) resolveRound(); 
+// --- DATA HANDLING ---
+function handleData(d) {
+    if (d.type === 'READY') { peerReady = true; checkStart(); }
+    if (d.type === 'START_GAME') { startGame(); }
+    if (d.type === 'MOVE') { oChoice = d.move; checkResolve(); }
+    if (d.type === 'NEXT_STAGE') { stage = d.stage; next(); }
+    if (d.type === 'SUDDEN') { sudden(); }
+    if (d.type === 'REMATCH') { rematchRequest = true; checkRematch(); }
+    if (d.type === 'TEKO') { tekoFlash(); }
+}
+
+function send(type, data = {}) { if(conn) conn.send({type, ...data}); }
+
+// --- GAME FLOW ---
+function showReadyScreen() {
+    $("screen").innerHTML = "CHALLENGER FOUND!\nREADY?";
+    btns([{t: "I'M READY", fn: () => {
+        myReady = true;
+        send('READY');
+        $("screen").innerHTML = "WAITING FOR OPPONENT...";
+        $("buttons").innerHTML = "";
+        checkStart();
+    }}]);
+}
+
+function checkStart() {
+    if (myReady && peerReady) {
+        if (isHost) {
+            send('START_GAME');
+            startGame();
+        }
     }
 }
 
-function send(data){ if(conn && conn.open) conn.send(data); }
-
-// --- GAME UI START ---
-function startGameUI(){
-    document.getElementById("lobby").style.display="none";
-    document.getElementById("game").style.display="block";
-    startMusicLoop();
+function startGame() {
+    stage = 0; round = 1; balbalot = false;
+    $("app").classList.remove("balbalot-shake");
     next();
 }
 
-function startMusicLoop(){
-    setInterval(()=>{ beep(150,50); }, 500); // Simple heartbeat
+function next() {
+    const speed = 1 + (round - 1) * 0.85;
+    if (stage === 0) {
+        const text = balbalot ? "מגה חרב" : "מגה קרב";
+        $("screen").innerHTML = `STAGE 1\n${text}`;
+        btns([{t:text, ok:true}, {t:"מגה גרב", ok:false}]);
+        startBar(80 / speed); stage = 1;
+    } else if (stage === 1) {
+        const text = balbalot ? "סופר חרב" : "סופר קרב";
+        $("screen").innerHTML = `STAGE 2\n${text}`;
+        btns([{t:text, ok:true}, {t:"סופר קרפ", ok:false}]);
+        startBar(80 / speed); stage = 2;
+    } else if (stage === 2) {
+        const text = balbalot ? "מגה מגה מגה חרב" : "מגה מגה מגה קרב";
+        $("screen").innerHTML = `CHANT!\n${text}`;
+        btns([{t:text, ok:true}, {t:"מנה מנה מנה", ok:false}]);
+        startBar(60 / speed); stage = 3;
+    } else if (stage === 3) {
+        $("screen").innerHTML = `ROUND ${round}\nGO!!`;
+        btns((balbalot ? MOVES.BAL : MOVES.NORMAL).map(m => ({t:m, ok:true, move: true})));
+        startBar(120 / speed);
+    }
 }
 
-// --- GAMEPLAY FLOW ---
-function show(h){ document.getElementById("screen").innerHTML=h; }
-function buttons(arr){
-    document.getElementById("buttons").innerHTML = arr.map(b=>
-        `<button class='btn' onclick="press('${b.t}',${b.ok})">${b.t}</button>`
-    ).join("");
-}
-function decoys(w){
- let d=[...(DECOY[w]||[])];
- while(d.length<2) d.push(w+"X");
- return [...new Set(d)].slice(0,2);
+function startBar(interval) {
+    clearInterval(barTimer); barWidth = 100;
+    barTimer = setInterval(() => {
+        barWidth -= 2; $("timeBar").style.width = barWidth + "%";
+        if (barWidth <= 0) triggerShame("קורבן!", "איטי מדי!");
+    }, interval);
 }
 
-function press(t, ok){
-    if(stage === -1) return; // Dead/Win state
+function btns(arr) {
+    $("buttons").innerHTML = arr.map(b => `<button class='btn' onclick="press('${b.t}', ${b.ok}, ${!!b.fn}, ${!!b.move})">${b.t}</button>`).join("");
+    if (arr[0].fn) window.lastFns = arr;
+}
 
-    // 1. GATEKEEPER PHASES
-    if(stage < 30 && stage !== 4) {
-        if(!ok) {
-            send({type: 'DIE'});
-            korban("WRONG BUTTON");
-        } else {
-            stopBar();
-            next(); // Advance locally
+function press(t, ok, isFn, isMove) {
+    if (isFn) { window.lastFns.find(f => f.t === t).fn(); return; }
+    if (!ok) { send('MOVE', {move: 'FAIL'}); triggerShame("קורבן!", "קלט שגוי!"); return; }
+    if (stage === 100) { suddenActive = false; victory(); return; }
+    if (isMove) {
+        clearInterval(barTimer);
+        pChoice = t;
+        send('MOVE', {move: t});
+        $("screen").innerHTML = "WAITING FOR OPPONENT...";
+        $("buttons").innerHTML = "";
+        checkResolve();
+        return;
+    }
+    if (isHost) { stage++; send('NEXT_STAGE', {stage}); next(); }
+}
+
+function checkResolve() {
+    if (pChoice && oChoice) {
+        if (pChoice === 'FAIL' || oChoice === 'FAIL') {
+            if (pChoice === 'FAIL' && oChoice === 'FAIL') triggerShame("קורבן!", "שניכם נכשלתם");
+            else if (pChoice === 'FAIL') triggerShame("קורבן!", "נכשלת ברצף!");
+            else victory();
+            return;
         }
-        return;
-    }
+        const list = balbalot ? MOVES.BAL : MOVES.NORMAL;
+        const wins = [[list[0], list[3]], [list[1], list[0]], [list[2], list[1]], [list[3], list[2]]];
+        const pW = wins.some(p => p[0] === pChoice && p[1] === oChoice);
+        const cW = wins.some(p => p[0] === oChoice && p[1] === pChoice);
 
-    // 2. TIE BREAKER
-    if(stage === 4) {
-        if(!ok) { send({type:'DIE'}); korban("WRONG BUTTON"); }
-        else { stopBar(); next(); }
-        return;
-    }
-
-    // 3. SUDDEN DEATH
-    if(stage === 100) {
-        if(!ok) { send({type:'DIE'}); korban("WRONG BUTTON"); }
+        if (pW) victory();
+        else if (cW) triggerShame("מפסידן!", "הובסת!");
         else {
-            send({type:'WIN'});
-            win("FASTEST FINGER");
-        }
-        return;
-    }
-
-    // 4. ARENA
-    if(stage === 30) {
-        stopBar();
-        myMove = t;
-        show(`YOU: ${myMove}<br>OPP: ...`);
-        document.getElementById("buttons").innerHTML = "<div class='btn'>WAITING...</div>";
-        send({type: 'MOVE', val: t});
-        if(oppMove) resolveRound();
-    }
-}
-
-function next(){
-    const W = balbalot ? WORDS.bal : WORDS.normal;
-    barWidth = 100;
-    
-    // Logic Mapping
-    if(stage === 0) {
-        show(W.challenge);
-        buttons([{t:W.challenge,ok:true},...decoys(W.challenge).map(x=>({t:x,ok:false}))]);
-        startBar(); stage=1; 
-    }
-    else if(stage === 1) {
-        show(W.accept);
-        buttons([{t:W.accept,ok:true},...decoys(W.accept).map(x=>({t:x,ok:false}))]);
-        startBar(); stage=2;
-    }
-    else if(stage === 2) {
-        show(W.chant);
-        buttons([{t:W.chant,ok:true},...decoys(W.chant).map(x=>({t:x,ok:false}))]);
-        startBar(); stage=3;
-    }
-    else if(stage === 3) {
-        enterArena();
-    }
-    else if(stage === 4) {
-        show("TEKO TEKO!");
-        buttons([{t:"תיקו תיקו",ok:true},...decoys("תיקו תיקו").map(x=>({t:x,ok:false}))]);
-        startBar(); stage=5;
-    }
-    else if(stage === 5) {
-        stage=0; next();
-    }
-}
-
-function enterArena(){
-    myMove = null; oppMove = null;
-    show(`ARENA ROUND ${round}<br>PICK MOVE`);
-    let opts = Object.keys(balbalot?BAL:ARENA);
-    buttons(opts.map(o=>({t:o,ok:true})));
-    startBar(10); // Slower bar for strategy
-    stage = 30;
-}
-
-function resolveRound(){
-    show(`YOU: ${myMove}<br>OPP: ${oppMove}`);
-    
-    let T = balbalot ? BAL : ARENA;
-    
-    setTimeout(() => {
-        if(myMove === oppMove) {
+            pChoice = oChoice = null;
             round++;
-            document.getElementById("screen").classList.add("flash-yellow");
-            setTimeout(()=>document.getElementById("screen").classList.remove("flash-yellow"), 300);
-            if(round === 3) balbalot = true;
-            if(round >= 4) { enterSuddenDeath(); return; }
-            stage = 4; next(); // Go to TEKO
-        } else if (T[myMove] === oppMove) {
-            send({type: 'WIN'}); // I win, tell them they lost (failsafe)
-            win("VICTORY");
-        } else {
-            lose("DEFEAT");
+            if (round === 3) { balbalot = true; $("app").classList.add("balbalot-shake"); }
+            if (round >= 4) { if(isHost) send('SUDDEN'); sudden(); }
+            else { if(isHost) send('TEKO'); tekoFlash(); }
         }
-    }, 1000);
+    }
 }
 
-function enterSuddenDeath(){
+function tekoFlash() {
+    $("screen").innerHTML = "TEKO TEKO!";
+    $("screen").classList.add("flash-yellow");
+    setTimeout(() => { $("screen").classList.remove("flash-yellow"); if(isHost) next(); }, 800);
+}
+
+function sudden() {
     stage = 100;
-    show(`<div class="flash-yellow">SUDDEN DEATH</div><img src="${AMOS_URL}" class="amos-sprite">`);
-    buttons([{t:"פטיבר עמוס",ok:true},...decoys("פטיבר עמוס").map(x=>({t:x,ok:false}))]);
-    startBar(20); // Fast!
+    $("screen").innerHTML = `<img src="https://img.mako.co.il/2016/05/26/petiber_i.jpg" class="amos-img">\nעמוס פטיבר!`;
+    suddenActive = true;
+    setTimeout(() => { if (suddenActive) triggerShame("מפסידן!", "עמוס שתה אותך!"); }, 1300);
+    btns([{t:"פטיבר עמוס", ok:true}]);
 }
 
-function startBar(speed=3){
+function triggerShame(title, msg) {
     clearInterval(barTimer);
-    barTimer = setInterval(()=>{
-        barWidth -= speed;
-        document.getElementById("timeBar").style.width = barWidth+"%";
-        if(barWidth <= 0) {
-            send({type: 'DIE'});
-            korban("TOO SLOW");
-        }
-    }, 120);
+    $("screen").innerHTML = `<div class="shame-text">${title}</div>${msg}`;
+    showEndMenu();
 }
 
-function stopBar(){ clearInterval(barTimer); }
-
-function korban(reason){
-    stopBar(); stage = -1;
-    show(`💀 KORBAN 💀<br>${reason}`);
-    document.getElementById("buttons").innerHTML = "<button class='btn' onclick='location.reload()'>LOBBY</button>";
-}
-function win(reason){
-    stopBar(); stage = -1;
-    show(`🏆 YOU WIN 🏆<br>${reason}`);
-    document.getElementById("buttons").innerHTML = "<button class='btn' onclick='location.reload()'>LOBBY</button>";
-}
-function lose(reason){
-    stopBar(); stage = -1;
-    show(`🍺 YOU LOSE 🍺<br>${reason}`);
-    document.getElementById("buttons").innerHTML = "<button class='btn' onclick='location.reload()'>LOBBY</button>";
+function victory() {
+    clearInterval(barTimer);
+    $("screen").innerHTML = `<div class="shame-text" style="color:var(--neon)">נצחון!</div>`;
+    showEndMenu();
 }
 
+function showEndMenu() {
+    pChoice = oChoice = null;
+    btns([
+        {t: "REMATCH", fn: () => {
+            myReady = true; send('REMATCH');
+            $("screen").innerHTML = "WAITING FOR OPPONENT...";
+            checkRematch();
+        }},
+        {t: "EXIT", fn: () => window.location.href='index.html'}
+    ]);
+}
+
+function checkRematch() {
+    if (myReady && rematchRequest) {
+        myReady = peerReady = rematchRequest = false;
+        startGame();
+    }
+}
+
+function onOpponentLeft() {
+    clearInterval(barTimer);
+    $("screen").innerHTML = "OPPONENT LEFT.\nBACK TO MENU...";
+    setTimeout(() => window.location.href='index.html', 3000);
+}
+
+initMenu();
 </script>
 </body>
 </html>
