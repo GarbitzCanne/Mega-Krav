@@ -2,181 +2,123 @@
 <html dir="rtl">
 <head>
 <meta charset="utf-8"/>
-
-<!-- קריטי למובייל -->
 <meta name="viewport"
  content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
 
-<title>MEGA KRAV MOBILE</title>
+<title>Mega Krav Mobile</title>
 
 <style>
-html,body{
-  margin:0;
-  padding:0;
-  background:#050505;
-  color:#33ff33;
-  font-family:"Courier New",monospace;
-
-  /* מונע זום דאבל טאפ */
-  touch-action:manipulation;
+body{
+ background:#050505;
+ color:#33ff33;
+ font-family:monospace;
+ margin:0;
 }
 
-#cabinet{
-  max-width:480px;
-  margin:auto;
-  padding:10px;
-
-  /* safe area לאייפון */
-  padding-bottom: env(safe-area-inset-bottom);
+#app{
+ max-width:480px;
+ margin:auto;
+ padding:10px;
 }
 
 #screen{
-  border:2px solid #117711;
-  background:#001100;
-  padding:12px;
-  min-height:22vh;
-
-  font-size:18px;
-  line-height:1.3;
-
-  margin-bottom:8px;
-  white-space:pre-line;
+ border:2px solid #117711;
+ background:#001100;
+ padding:12px;
+ min-height:22vh;
+ white-space:pre-line;
+ font-size:18px;
 }
 
-/* ===== כפתורי ענק לאצבע ===== */
 .btn{
-  display:block;
-  width:100%;
+ display:block;
+ width:100%;
+ margin:6px 0;
+ padding:16px;
 
-  background:#002200;
-  color:#33ff33;
+ background:#002200;
+ color:#33ff33;
 
-  border:2px solid #33ff33;
-  border-radius:10px;
+ border:2px solid #33ff33;
+ border-radius:10px;
 
-  margin:6px 0;
-  padding:16px;
-
-  font-size:22px;
-  text-align:center;
-
-  /* מרגיש כמו אפליקציה */
-  user-select:none;
-}
-
-.btn:active{
-  background:#004400;
-  transform:scale(0.97);
+ font-size:22px;
 }
 
 #timer{
-  font-size:24px;
-  text-align:center;
-  margin:6px;
-}
-
-.title{
-  text-align:center;
-  letter-spacing:2px;
-  margin:6px;
-}
-
-/* במכשירים ממש קטנים */
-@media(max-width:360px){
- .btn{font-size:20px;padding:14px;}
- #screen{font-size:16px;}
+ text-align:center;
+ font-size:24px;
 }
 </style>
 </head>
 
 <body>
+<div id="app">
 
-<div id="cabinet">
-
-<h2 class="title">MEGA KRAV POCKET</h2>
-
-<div id="timer">TIME: --</div>
-
-<div id="screen">INSERT COIN</div>
-
+<div id="timer">TIME</div>
+<div id="screen"></div>
 <div id="buttons"></div>
 
 </div>
 
 <script>
-// ===== AUDIO =====
-function beep(){
- try{
-  let a=new AudioContext();
-  let o=a.createOscillator();
-  o.type="square";
-  o.frequency.value=600;
-  o.connect(a.destination);
-  o.start();
-  setTimeout(()=>o.stop(),70);
- }catch(e){}
-}
+// ===== STATE =====
+let stage = 0;
+let round = 1;
+let balbalot = false;
+let speed = 6;
+
+let timer, timeLeft;
+
+let playerMove, cpuMove;
 
 // ===== DATA =====
-let stage=0, speed=6, round=1, balbalot=false;
-let timer,timeLeft;
-let pMove,cMove;
-
-const arena={
+const ARENA = {
  "בונגלו":"אוניה",
  "פיירבול":"בונגלו",
  "צונמי":"פיירבול",
  "אוניה":"צונמי"
 };
 
-const balArena={
+const BAL = {
  "לונגבו":"אוווניה",
  "פיירדד":"לונגבו",
  "נוצמי":"פיירדד",
  "אוווניה":"נוצמי"
 };
 
-// ===== DECOYS =====
-function makeDecoys(word){
- let d=new Set();
+// ===== SAFE DECOYS – NEVER IDENTICAL =====
+const DECOY_BANK = {
+ "מגה קרב":["מגה קראב","מגה קרבה","מגע קרב"],
+ "סופר קרב":["סופר קראב","סופ קרב","סופר כרב"],
+ "מגה חרב":["מגה חרבה","מגע חרב","מגה חראב"],
+ "סופר חרב":["סופר חרבה","סופר חראב","סופ חרב"],
+ "תיקו תיקו":["טיקו תיקו","תיקו תיק","טיקו טיקו"],
+ "פטיבר עמוס":["פטיבר אמוס","פטיבר עמוש","פתיבר עמוס"]
+};
 
- d.add(word.replace(/ו/g,"וו"));
- d.add(word.replace(/י/g,"יי"));
- d.add(word.replace(/ב/g,"פ"));
- d.add(word.replace(/ק/g,"כ"));
- d.add(word.split("").reverse().join(""));
-
- d.delete(word);
- return Array.from(d);
+function getDecoys(word){
+ return DECOY_BANK[word] || [
+   word+"!",
+   word.split("").reverse().join(""),
+   word+"?"
+ ];
 }
 
-function buttonsWithTraps(correct){
- let arr=[{t:correct,ok:true}];
+// ===== RENDER =====
+function show(t){
+ document.getElementById("screen").innerText=t;
+}
 
- makeDecoys(correct)
-  .slice(0,3)
-  .forEach(x=>arr.push({t:x,ok:false}));
-
- arr=arr.sort(()=>Math.random()-0.5);
-
+function renderButtons(list){
  let h="";
- arr.forEach(b=>{
+ list.forEach(b=>{
   h+=`<div class='btn'
-        onclick="pressTrap('${b.t}',${b.ok})">
-        ${b.t}
+       onclick="handle('${b.t}',${b.ok})">
+       ${b.t}
       </div>`;
  });
-
  document.getElementById("buttons").innerHTML=h;
-}
-
-function pressTrap(text,ok){
- beep();
- if(!ok){
-   korban("LANGUAGE ERROR");
-   return;
- }
- game(text);
 }
 
 // ===== TIMER =====
@@ -190,156 +132,193 @@ function startTimer(){
  timer=setInterval(()=>{
   timeLeft--;
   document.getElementById("timer").innerText=
-    "TIME: "+timeLeft;
+   "TIME: "+timeLeft;
 
   if(timeLeft<=0)
-    korban("HUMAN TOO SLOW");
+    korban("TOO SLOW");
 
  },1000);
 }
 
-// ===== UI =====
-function screen(t){
- document.getElementById("screen").innerText=t;
-}
-
+// ===== KORBAN =====
 function korban(r){
  clearInterval(timer);
- screen("HAHA YOU IS קורבן\n"+r);
 
- document.getElementById("buttons").innerHTML=
- `<div class='btn' onclick='start()'>
-    NEW GAME
-  </div>`;
+ show("HAHA YOU IS קורבן\n"+r);
+
+ renderButtons([
+  {t:"NEW GAME",ok:true}
+ ]);
+
+ stage=-1;
 }
 
-// ===== FLOW =====
-function game(input){
+// ===== INPUT HANDLER =====
+function handle(text, ok){
 
+ if(stage===-1){
+   start();
+   return;
+ }
+
+ if(!ok){
+   korban("LANGUAGE ERROR");
+   return;
+ }
+
+ next(text);
+}
+
+// ===== FLOW CONTROLLER =====
+function next(input){
+
+// 0 – CHALLENGE
 if(stage===0){
- screen("PHASE 1\n"+
-   (balbalot?"מגה חרב":"מגה קרב"));
+ show("PHASE 1\n"+
+  (balbalot?"מגה חרב":"מגה קרב"));
 
- buttonsWithTraps(
-   balbalot?"מגה חרב":"מגה קרב"
- );
+ let w=balbalot?"מגה חרב":"מגה קרב";
+
+ renderButtons([
+  {t:w, ok:true},
+  ...getDecoys(w).map(x=>({t:x,ok:false}))
+ ]);
 
  startTimer();
  stage=1;
  return;
 }
 
+// 1 – ACCEPT
 if(stage===1){
- screen("PHASE 2\n"+
-   (balbalot?"סופר חרב":"סופר קרב"));
+ show("PHASE 2\n"+
+  (balbalot?"סופר חרב":"סופר קרב"));
 
- buttonsWithTraps(
-   balbalot?"סופר חרב":"סופר קרב"
- );
+ let w=balbalot?"סופר חרב":"סופר קרב";
+
+ renderButtons([
+  {t:w, ok:true},
+  ...getDecoys(w).map(x=>({t:x,ok:false}))
+ ]);
 
  startTimer();
  stage=2;
  return;
 }
 
+// 2 – CHANT
 if(stage===2){
- screen("CHANT\n"+
-   (balbalot?
-    "מגה מגה מגה חרב":
-    "מגה מגה מגה קרב"));
-
- buttonsWithTraps(
-   balbalot?
+ show("CHANT\n"+
+  (balbalot?
    "מגה מגה מגה חרב":
-   "מגה מגה מגה קרב"
- );
+   "מגה מגה מגה קרב"));
+
+ let w=balbalot?
+   "מגה מגה מגה חרב":
+   "מגה מגה מגה קרב";
+
+ renderButtons([
+  {t:w, ok:true},
+  {t:"מגה מגה קרב",ok:false},
+  {t:"מגה מגה חרב",ok:false}
+ ]);
 
  startTimer();
  stage=3;
  return;
 }
 
-// ===== ARENA =====
+// 3 – ARENA  ⭐ FIXED HERE ⭐
 if(stage===3){
-
- screen("ARENA ROUND "+round);
-
- let opts=balbalot?
-  ["לונגבו","פיירדד","נוצמי","אוווניה"]:
-  ["בונגלו","פיירבול","צונמי","אוניה"];
-
- let h="";
- opts.forEach(o=>{
-  h+=`<div class='btn'
-       onclick="arenaSelect('${o}')">
-       ${o}
-     </div>`;
- });
-
- document.getElementById("buttons").innerHTML=h;
-
- startTimer();
- stage=30;
+ enterArena();
  return;
 }
 
+// 4 – TEKO
 if(stage===4){
- screen("תיקו תיקו");
- buttonsWithTraps("תיקו תיקו");
+ show("תיקו תיקו");
+
+ renderButtons([
+  {t:"תיקו תיקו",ok:true},
+  ...getDecoys("תיקו תיקו")
+    .map(x=>({t:x,ok:false}))
+ ]);
+
  startTimer();
  stage=0;
  return;
 }
 
+// 99 – SUDDEN
 if(stage===99){
- screen("SUDDEN DEATH\nפטיבר עמוס");
- buttonsWithTraps("פטיבר עמוס");
+ show("SUDDEN DEATH\nפטיבר עמוס");
+
+ renderButtons([
+  {t:"פטיבר עמוס",ok:true},
+  ...getDecoys("פטיבר עמוס")
+    .map(x=>({t:x,ok:false}))
+ ]);
+
  startTimer();
  stage=100;
  return;
 }
 
-if(stage===100){
- screen("YOU WIN\nCOMPUTER מפסידן");
- end();
-}
 }
 
 // ===== ARENA LOGIC =====
-function arenaSelect(move){
- clearInterval(timer);
- pMove=move;
+function enterArena(){
+
+ show("ARENA ROUND "+round);
 
  let opts=balbalot?
-  ["לונגבו","פיירדד","נוצמי","אוווניה"]:
-  ["בונגלו","פיירבול","צונמי","אוניה"];
+  Object.keys(BAL):
+  Object.keys(ARENA);
 
- cMove=opts[
-  Math.floor(Math.random()*opts.length)
- ];
+ // ⭐ NO DECOYS IN ARENA ⭐
+ renderButtons(
+  opts.map(o=>({t:o,ok:true}))
+ );
 
- screen("YOU: "+pMove+"\nCPU: "+cMove);
+ startTimer();
+ stage=30;
+}
 
- setTimeout(resolve,700);
+function arenaSelect(move){
+ playerMove=move;
+
+ let opts=balbalot?
+  Object.keys(BAL):
+  Object.keys(ARENA);
+
+ cpuMove=
+  opts[Math.floor(Math.random()*opts.length)];
+
+ resolve();
 }
 
 function resolve(){
- let table=balbalot?balArena:arena;
 
- if(pMove===cMove){teko();return;}
+ let table=balbalot?BAL:ARENA;
 
- if(table[pMove]===cMove) win();
- else if(table[cMove]===pMove) lose();
- else teko();
+ if(playerMove===cpuMove){
+  teko(); return;
+ }
+
+ if(table[playerMove]===cpuMove){
+  win(); return;
+ }
+
+ lose();
 }
 
 function win(){
- screen("YOU WIN\nCOMPUTER מפסידן");
+ show("YOU WIN\nCOMPUTER מפסידן");
  end();
 }
 
 function lose(){
- screen("APOLOGIES\nYOU ARE מפסידן");
+ show("YOU ARE מפסידן");
  end();
 }
 
@@ -348,36 +327,41 @@ function teko(){
 
  if(round===3){
   balbalot=true;
-  screen("שלב הבלבלות");
+  show("שלב הבלבלות");
  }
 
  if(round>=4){
-  screen("תיקן תיקו\nSUDDEN DEATH");
   stage=99;
-  game();
+  next();
   return;
  }
 
  speed=Math.max(2,speed-1);
 
- screen("תיקו תיקו\nROUND "+round);
+ show("תיקו תיקו\nROUND "+round);
+
  stage=4;
- game();
+ next();
 }
 
 function end(){
  clearInterval(timer);
 
- document.getElementById("buttons").innerHTML=
- `<div class='btn' onclick='start()'>
-   NEW GAME
-  </div>`;
+ renderButtons([
+  {t:"NEW GAME",ok:true}
+ ]);
+
+ stage=-1;
 }
 
 // ===== START =====
 function start(){
- stage=0; round=1; speed=6; balbalot=false;
- game();
+ stage=0;
+ round=1;
+ balbalot=false;
+ speed=6;
+
+ next();
 }
 
 start();
