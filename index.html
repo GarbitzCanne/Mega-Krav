@@ -1,62 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html dir="rtl">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>MEGA KRAV</title>
-
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<title>MEGA KRAV ARCADE</title>
 
 <style>
 body{
- background:#0a0a0f;
+ background:#000;
  color:#33ff33;
- font-family:monospace;
+ font-family:Courier New,monospace;
  text-align:center;
+ margin:0;
 }
-#screen{
- min-height:180px;
+
+#app{
+ max-width:420px;
+ margin:auto;
+ border:3px solid #33ff33;
+ padding:10px;
+}
+
+#barBox{
+ width:100%;
+ height:14px;
  border:2px solid #33ff33;
- margin:10px;
+ margin-bottom:8px;
+}
+
+#bar{
+ width:100%;
+ height:100%;
+ background:#33ff33;
+}
+
+#screen{
+ min-height:200px;
+ border:1px solid #115511;
+ margin-bottom:8px;
  padding:10px;
  white-space:pre-line;
 }
+
 .btn{
- display:block;
- width:90%;
- margin:6px auto;
- background:#001100;
+ width:100%;
+ margin:4px 0;
+ padding:14px;
+ background:#112211;
  color:#33ff33;
  border:1px solid #33ff33;
- padding:10px;
-}
-.bar{
- height:12px;
- background:#330000;
- margin:6px;
-}
-.bar-inner{
- height:12px;
- background:#33ff33;
- width:100%;
+ font-size:16px;
 }
 </style>
-</head>
 
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
+</head>
 <body>
 
-<h2>MEGA KRAV ARCADE</h2>
-
+<div id="app">
+<div id="barBox"><div id="bar"></div></div>
 <div id="screen"></div>
-<div class="bar"><div id="bar" class="bar-inner"></div></div>
-
 <div id="buttons"></div>
 <div id="lobby"></div>
+</div>
 
 <script>
-// ====== CORE STATE ======
-let stage=0;       // 0 menu,1 challenge,2 chant,3 arena,4 result,5 balbalot,6 sudden
-let mode="single"; // single/multi-host/multi-guest
+// ===== DOM =====
+const screen=document.getElementById("screen");
+const buttonsDiv=document.getElementById("buttons");
+const barDiv=document.getElementById("bar");
+const lobby=document.getElementById("lobby");
+
+// ===== STATE =====
+let stage=0;
+let mode="single";
 let round=1;
 let speed=1;
 let lock=false;
@@ -64,15 +82,13 @@ let lock=false;
 let pMove=null;
 let oMove=null;
 
-// network
 let peer=null;
 let conn=null;
 
-// timer bar
 let barInt=null;
 let bar=100;
 
-// ====== RULES ======
+// ===== RULES =====
 const RULES={
  "בונגלו":"אוניה",
  "פיירבול":"בונגלו",
@@ -87,8 +103,8 @@ const BAL={
  "אוניה":"אוווניה"
 };
 
-// ====== UI ======
-function show(t){ screen.innerHTML=t; }
+// ===== UI =====
+function show(t){ screen.textContent=t; }
 
 function buttons(arr){
  let h="";
@@ -96,15 +112,15 @@ function buttons(arr){
   h+=`<button class="btn" onclick="${b.f}">${b.t}</button>`;
  });
 
- // BACK תמיד קיים
  h+=`<button class="btn" onclick="goMenu()">BACK TO MENU</button>`;
  buttonsDiv.innerHTML=h;
 }
 
-// ====== BAR ======
-function startBar(sec,fail){
+// ===== BAR =====
+function startBar(sec){
  clearInterval(barInt);
  bar=100;
+
  barInt=setInterval(()=>{
    bar-=100/(sec*10);
    if(bar<=0){
@@ -120,10 +136,13 @@ function stopBar(){
  barDiv.style.width="100%";
 }
 
-// ====== MENU ======
+// ===== MENU =====
 function menu(){
- show(`WELCOME TO MEGA KRAV
-SELECT MODE`);
+ stage=0;
+ show(
+"MEGA KRAV ARCADE\n\n"+
+"SELECT MODE"
+ );
  buttons([
   {t:"SINGLE PLAYER",f:"startSingle()"},
   {t:"HOST MULTI",f:"host()"},
@@ -132,7 +151,6 @@ SELECT MODE`);
 }
 
 function goMenu(){
- // notify ragequit
  if(conn){
    try{ conn.send({type:"ragequit"}); }catch(e){}
  }
@@ -151,17 +169,18 @@ function goMenu(){
  menu();
 }
 
-// ====== SINGLE ======
+// ===== SINGLE =====
 function startSingle(){
  mode="single";
  stage=1;
  challenge();
 }
 
-// ====== MULTI ======
+// ===== MULTI =====
 function host(){
  mode="multi-host";
  peer=new Peer();
+
  peer.on("open",id=>{
    lobby.innerHTML="HOST CODE: "+id;
    show("WAITING GUEST...");
@@ -178,6 +197,7 @@ function host(){
 function joinPrompt(){
  let id=prompt("ENTER CODE");
  if(!id)return;
+
  mode="multi-guest";
  peer=new Peer();
 
@@ -214,11 +234,11 @@ function sendStart(){
  challenge();
 }
 
-// ====== GAME FLOW ======
+// ===== GAME FLOW =====
 function challenge(){
  stage=1;
  show("מגה קרב ?");
- startBar(4,()=>korban("NO SUPER KRAV"));
+ startBar(4);
  buttons([{t:"סופר קרב",f:"chant()"}]);
 }
 
@@ -226,7 +246,7 @@ function chant(){
  stage=2;
  stopBar();
  show("מגה מגה מגה קרב");
- startBar(3/speed,arena);
+ startBar(3/speed);
  buttons([{t:"GO ARENA",f:"arena()"}]);
 }
 
@@ -236,7 +256,6 @@ function arena(){
 
  let opts=["בונגלו","פיירבול","צונמי","אוניה"];
 
- // balbalot mode
  if(round>=3){
    opts=opts.map(x=>BAL[x]);
  }
@@ -248,10 +267,11 @@ function arena(){
    f:`pick('${o}')`
  }));
 
- startBar(4/speed,()=>korban("NO PICK"));
+ startBar(4/speed);
  buttons(arr);
 }
 
+// ===== PICK =====
 function pick(v){
  if(lock)return;
  lock=true;
@@ -268,16 +288,15 @@ function pick(v){
  }
 }
 
+// ===== RESOLVE =====
 function resolve(){
  lock=false;
 
- // same
  if(pMove===oMove){
    draw();
    return;
  }
 
- // translate balbalot names
  let p=pMove, o=oMove;
 
  for(let k in BAL){
@@ -290,20 +309,24 @@ function resolve(){
  else draw();
 }
 
+// ===== RESULTS =====
 function win(){
- show(`
-YOU WIN
-מפפסידן = ENEMY
-`);
+ show(
+"ASCII TROPHY\n"+
+"  \\o/\n"+
+"   |\n"+
+"  / \\\n\n"+
+"YOU WIN\nמפפסידן = ENEMY"
+ );
  buttons([{t:"MENU",f:"goMenu()"}]);
 }
 
 function lose(){
- show(`
-YOU LOSE
-מפפסידן = YOU
-DRINK!
-`);
+ show(
+"ASCII CHASER\n"+
+"  >:-(\n\n"+
+"YOU LOSE\nמפפסידן = YOU\nDRINK!"
+ );
  buttons([{t:"MENU",f:"goMenu()"}]);
 }
 
@@ -331,37 +354,36 @@ function balbalot(){
  buttons([{t:"ENTER BALBALOT",f:"challenge()"}]);
 }
 
+// ===== SUDDEN =====
 function sudden(){
  stage=6;
  show("SUDDEN DEATH\nפטיבר עמוס");
 
- startBar(3,()=>korban("SLOW PETIBER"));
+ startBar(3);
 
  buttons([
   {t:"פטיבר עמוס",f:"suddenWin()"}
  ]);
 }
 
-function suddenWin(){
- win();
-}
+function suddenWin(){ win(); }
 
-// ====== KORBAN ======
+// ===== KORBAN =====
 function korban(r){
  stopBar();
- show(`
-KORBAN
-${r}
 
-MAKE STUPID MISSION
-`);
+ show(
+"ASCII CRY\n"+
+" (T_T)\n\n"+
+"KORBAN\n"+r+
+"\nMAKE STUPID MISSION"
+ );
+
  buttons([{t:"MENU",f:"goMenu()"}]);
 }
 
-// ====== INIT ======
+// ===== INIT =====
 menu();
-
 </script>
-
 </body>
 </html>
