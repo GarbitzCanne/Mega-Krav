@@ -11,16 +11,21 @@
   --bg: #050a05;
 }
 
-body {
+/* ==== תיקון גלילה ==== */
+html, body {
   background:#000;
   color:var(--neon);
   font-family:'Courier New',monospace;
   margin:0;
-  padding:10px;
+  padding:0;
   text-transform:uppercase;
+
+  height:auto;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
 }
 
-/* CRT EFFECT */
+/* CRT EFFECT שלא חוסם טאצ' */
 body::before{
  content:" ";
  position:fixed;
@@ -35,7 +40,7 @@ body::before{
 
 #box{
  max-width:520px;
- margin:auto;
+ margin:10px auto 40px auto;
  border:3px solid #113311;
  background:#000;
  padding:14px;
@@ -67,6 +72,7 @@ td,th{
 }
 
 pre{color:#66ff66;}
+hr{border:1px solid #113311;}
 
 </style>
 </head>
@@ -103,4 +109,145 @@ FROM THIS HOLY MOMENT —
 
 <p>
 GAME START EASY.  
-THEN SPEE
+THEN SPEED GO CRAZY.  
+WORDS CHANGE LITTLE BIT.  
+BRAIN SAY “NO PROBLEM”.  
+MOUTH SAY “TOTAL BALAGAN”.
+</p>
+
+<p>
+THEN YOU BECOME — <strong>KORBAN</strong>.
+</p>
+
+<hr>
+
+<h2>TWO WAYS TO LOSE</h2>
+
+<h3>🍺 MAFSIDAN – מפסידן</h3>
+<p>
+YOU PLAYED HONORABLE.  
+BUT ENEMY STRONGER.
+</p>
+<p><strong>PUNISHMENT:</strong> DRINK LIKE HERO.</p>
+
+<h3>💀 KORBAN – קורבן</h3>
+<p>
+YOU STUTTER.  
+YOU MISCLICK.  
+YOU DISRESPECT SACRED WORD.
+</p>
+
+<p>
+<strong>PUNISHMENT:</strong>  
+RIVAL GIVE YOU STUPID MISSION.
+</p>
+
+<p>
+MISSION MUST BE:  
+• ANNOYING  
+• NOT DANGEROUS  
+• NOT ILLEGAL  
+• MAXIMUM DUMB
+</p>
+
+<p>
+EXAMPLES:  
+– BRING WATER WITH SPOON ONLY  
+– TALK LIKE WAZE VOICE  
+– APOLOGIZE TO CHAIR  
+– SING HATIKVA TO POTATO
+</p>
+
+<hr>
+
+<h2>ARENA – WHAT BEATS WHAT</h2>
+
+<table>
+<tr><th>MOVE</th><th>BEATS</th></tr>
+<tr><td>בונגלו – BUNGALOW</td><td>אוניה – ONIA</td></tr>
+<tr><td>פיירבול – FIREBALL</td><td>בונגלו</td></tr>
+<tr><td>צונמי – TSUNAMI</td><td>פיירבול</td></tr>
+<tr><td>אוניה – ONIA</td><td>צונמי</td></tr>
+</table>
+
+<p>
+YOU WIN → ENEMY MAFSIDAN  
+YOU LOSE → YOU DRINK
+</p>
+
+<hr>
+
+<h2>TEKO TEKO – תיקו תיקו</h2>
+
+<p>
+SAME MOVE?  
+NO CLEAR WINNER?
+</p>
+
+<p>
+BOTH MUST SAY: <strong>“TEKO TEKO!”</strong>  
+GAME RESTART — FASTER.
+</p>
+
+<p>
+TWO TEKO → ENTER  
+<strong>BALBALOT MODE</strong>
+</p>
+
+<hr>
+
+<h2>BALBALOT – בלבלות</h2>
+
+<table>
+<tr><th>NORMAL</th><th>BALBALOT</th></tr>
+<tr><td>מגה קרב</td><td>מגה חרב</td></tr>
+<tr><td>סופר קרב</td><td>סופר חרב</td></tr>
+<tr><td>בונגלו</td><td>לונגבו</td></tr>
+<tr><td>פיירבול</td><td>פיירדד</td></tr>
+<tr><td>צונמי</td><td>נוצמי</td></tr>
+<tr><td>אוניה</td><td>אוווניה</td></tr>
+</table>
+
+<p>HERE PEOPLE DIE INSIDE.</p>
+
+<hr>
+
+<h2>SUDDEN DEATH – פטיבר עמוס</h2>
+
+<p>
+AFTER 3 TEKOS → NO MORE ARENA.
+</p>
+
+<p>
+FIRST TO PRESS:  
+<strong>פטיבר עמוס</strong>  
+IS WINNER.
+</p>
+
+<p>
+HESITATE?  
+MISCLICK?  
+YOU = <strong>KORBAN FOREVER</strong>
+</p>
+
+<hr>
+
+<h2>GOLDEN RULE</h2>
+
+<p>
+IF YOU ARGUE ABOUT RULES —  
+YOU AUTOMATIC KORBAN.
+</p>
+
+<pre>
+APOLOGIES, YOU ARE מפסידן  
+HAHA, YOU IS קורבן
+</pre>
+
+<button class="btn" onclick="window.location='index.html'">
+BACK TO GAME
+</button>
+
+</div>
+</body>
+</html>
