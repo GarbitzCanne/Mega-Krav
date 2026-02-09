@@ -18,684 +18,308 @@
 }
 
 body {
-  background: #000;
-  color: var(--neon);
-  font-family: 'VT323', monospace;
-  margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  overflow-x: hidden;
-  text-transform: uppercase;
-  padding: 10px;
-  box-sizing: border-box;
+  background:#000;color:var(--neon);font-family:'VT323',monospace;
+  margin:0;display:flex;justify-content:center;align-items:center;
+  min-height:100vh;text-transform:uppercase;padding:10px;box-sizing:border-box;
 }
 
-/* CRT SCANLINE OVERLAY */
-body::before {
-  content: "";
-  display: block;
-  position: fixed;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
-              linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.04));
-  z-index: 100;
-  background-size: 100% 3px, 3px 100%;
-  pointer-events: none;
+/* CRT */
+body::before{
+ content:"";position:fixed;inset:0;
+ background:linear-gradient(rgba(18,16,16,0)50%,rgba(0,0,0,.1)50%),
+            linear-gradient(90deg,rgba(255,0,0,.04),rgba(0,255,0,.01),rgba(0,0,255,.04));
+ background-size:100%3px,3px 100%;pointer-events:none;z-index:100;
 }
 
-#container {
-  width: 100%;
-  max-width: 900px;
-  position: relative;
-  z-index: 5;
+#container{width:100%;max-width:900px;position:relative;z-index:5}
+
+.game-area{display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
+
+.player-box{
+ max-width:400px;background:var(--bg);padding:15px;border:4px solid var(--neon);
+ box-shadow:0 0 20px var(--neon);text-align:center;flex:1 1 300px
+}
+.player-box.p2{border-color:var(--neon-p2);box-shadow:0 0 10px var(--neon-p2)}
+
+#lobby{
+ max-width:500px;background:var(--bg);padding:30px;border:4px solid var(--neon);
+ box-shadow:0 0 20px var(--neon);text-align:center;margin:0 auto;
 }
 
-.game-area {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  flex-wrap: wrap;
+#status{font-size:14px;margin-bottom:10px;padding:8px;border:2px solid #333;background:#000}
+#status.connected{border-color:var(--neon)}
+#status.waiting{border-color:var(--warn);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.5}}
+
+#debug{
+ font-size:12px;background:#001100;border:1px dashed var(--neon);
+ padding:6px;margin-top:8px;height:90px;overflow:auto;text-align:left;
 }
 
-.player-box {
-  width: 100%;
-  max-width: 400px;
-  background: var(--bg);
-  padding: 15px;
-  border: 4px solid var(--neon);
-  box-shadow: 0 0 20px var(--neon);
-  text-align: center;
-  flex: 1 1 300px;
-  transition: all 0.2s;
+#timeBarBox{width:100%;height:14px;background:#111;border:2px solid var(--neon)}
+#timeBar{height:100%;width:100%;background:var(--neon);transition:.1s linear}
+
+.screen{
+ border:2px solid #113311;background:#000;padding:10px;min-height:180px;
+ font-size:24px;margin-bottom:10px;display:flex;align-items:center;
+ justify-content:center;white-space:pre-wrap;
 }
 
-.player-box.p2 {
-  box-shadow: 0 0 10px var(--neon-p2);
-  border-color: var(--neon-p2);
-  opacity: 0.9;
+.btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{
+ width:100%;padding:15px;background:#0a1a0a;color:var(--neon);
+ border:2px solid var(--neon);font-family:'VT323';font-size:22px;cursor:pointer
 }
+.btn:hover{background:var(--neon);color:#000}
 
-.player-box.p2 .player-name { color: var(--neon-p2); }
+.balbalot-shake{animation:shake .1s infinite;border-color:var(--danger)!important}
+@keyframes shake{50%{transform:translate(-2px,2px)}}
 
-#lobby {
-  width: 100%;
-  max-width: 500px;
-  background: var(--bg);
-  padding: 30px;
-  border: 4px solid var(--neon);
-  box-shadow: 0 0 20px var(--neon);
-  text-align: center;
-  margin: 0 auto;
-}
+.flash-yellow{background:rgba(255,204,0,.4)!important}
+.flash-red{animation:flashRed .5s}
+@keyframes flashRed{0%{background:#ff0000}}
 
-.player-name {
-  color: var(--neon);
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 5px;
-  text-shadow: 0 0 5px currentColor;
-}
-
-#status {
-  font-size: 14px;
-  margin-bottom: 10px;
-  padding: 8px;
-  border: 2px solid #333;
-  background: #000;
-}
-#status.connected { border-color: var(--neon); color: var(--neon); }
-#status.disconnected { border-color: var(--danger); color: var(--danger); }
-#status.waiting { border-color: var(--warn); color: var(--warn); animation: pulse 1s infinite; }
-
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-#timeBarBox {
-  width: 100%;
-  height: 14px;
-  background: #111;
-  border: 2px solid var(--neon);
-  margin-bottom: 10px;
-}
-#timeBar {
-  height: 100%;
-  width: 100%;
-  background: var(--neon);
-  box-shadow: 0 0 10px var(--neon);
-  transition: width 0.1s linear;
-}
-
-.screen {
-  border: 2px solid #113311;
-  background: #000;
-  padding: 10px;
-  min-height: 180px;
-  font-size: 24px;
-  margin-bottom: 10px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  white-space: pre-wrap;
-}
-
-.btn-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
-.btn {
-  display: block;
-  width: 100%;
-  margin: 5px 0;
-  padding: 15px 10px;
-  background: #0a1a0a;
-  color: var(--neon);
-  border: 2px solid var(--neon);
-  font-family: 'VT323';
-  font-size: 22px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-.btn:hover { background: var(--neon); color: #000; }
-.btn:active { transform: scale(0.98); }
-.btn.big { font-size: 26px; padding: 15px; grid-column: span 2; }
-.btn .emoji { display: block; font-size: 32px; margin-bottom: 5px; }
-
-input {
-  width: 80%;
-  padding: 10px;
-  font-size: 20px;
-  background: #000;
-  border: 2px solid var(--neon);
-  color: var(--neon);
-  font-family: 'VT323';
-  margin: 10px 0;
-  text-transform: uppercase;
-  text-align: center;
-}
-
-/* ANIMATIONS */
-.shame-text { font-size: 50px; text-shadow: 0 0 15px red; animation: glitch 0.1s infinite; }
-.shame-desc { font-size: 20px; color: #fff; margin-top: 10px; border-top: 1px dashed var(--danger); padding-top: 10px; }
-
-@keyframes glitch { 
-    0% { transform: translate(2px, 2px); text-shadow: -2px 0 red; } 
-    50% { transform: translate(-2px, -2px); text-shadow: 2px 0 blue; } 
-    100% { transform: translate(2px, -2px); text-shadow: -2px 0 green; } 
-}
-
-.balbalot-shake { animation: shake-heavy 0.1s infinite; border-color: var(--danger) !important; }
-@keyframes shake-heavy { 
-    0% { transform: translate(1px, 1px) rotate(0deg); } 
-    25% { transform: translate(-2px, -2px) rotate(1deg); } 
-    50% { transform: translate(2px, 1px) rotate(-1deg); } 
-    75% { transform: translate(-1px, 2px) rotate(0deg); } 
-}
-
-.flash-yellow { background: rgba(255, 204, 0, 0.4) !important; }
-.flash-red { animation: flashRed 0.5s; }
-@keyframes flashRed { 0% { background: #ff0000; } 100% { background: #000; } }
-
-.amos-img { width: 120px; height: 120px; border: 3px solid var(--danger); filter: contrast(1.5) grayscale(0.5); image-rendering: pixelated; margin-bottom: 10px; }
-#roomCode { font-size: 32px; color: #ffff33; margin: 20px 0; letter-spacing: 3px; user-select: all; cursor: pointer; }
+.amos-img{width:120px;border:3px solid var(--danger);margin-bottom:10px}
 </style>
 </head>
 
 <body>
 <div id="container">
-  <div id="lobby">
-    <h1 style="font-size:32px; margin-bottom:20px;">MEGA KRAV<br>TOXIC EDITION</h1>
-    <div id="status" class="disconnected">KRAV_NET // DISCONNECTED</div>
-    
-    <div id="menu">
-      <button class="btn big" onclick="createGame()">HOST GAME</button>
-      <button class="btn big" onclick="showJoin()">JOIN GAME</button>
-      <button class="btn big" onclick="backToMenu()">BACK TO MENU</button>
-    </div>
 
-    <div id="join-screen" style="display:none;">
-      <input type="text" id="peerIdInput" placeholder="ENTER HOST ID" />
-      <button class="btn" onclick="joinGame()">CONNECT</button>
-      <button class="btn" onclick="showMenu()">BACK</button>
-    </div>
+<div id="lobby">
+ <h1>MEGA KRAV<br>TOXIC EDITION</h1>
+ <div id="status" class="disconnected">KRAV_NET // DISCONNECTED</div>
 
-    <div id="waiting-screen" style="display:none;">
-      <div style="color:#ffcc00; font-size:22px;">WAITING FOR OPPONENT...</div>
-      <div style="font-size:18px; margin-top:10px;">YOUR ID (TAP TO COPY):</div>
-      <div id="roomCode" onclick="copyId()"></div>
-      <div style="font-size:16px;">(Send this to your victim)</div>
-      <button class="btn" onclick="cancelHost()">CANCEL</button>
-    </div>
+ <div id="menu">
+   <button class="btn" onclick="createGame()">HOST GAME</button>
+   <button class="btn" onclick="showJoin()">JOIN GAME</button>
+   <button class="btn" onclick="backToMenu()">BACK</button>
+ </div>
 
-    <div id="ready-screen" style="display:none;">
-      <div style="font-size:28px; margin:20px 0;">CHALLENGER FOUND!</div>
-      <button class="btn big" onclick="setReady()">I'M READY</button>
-    </div>
-  </div>
+ <div id="join-screen" style="display:none">
+   <input id="peerIdInput" placeholder="ENTER HOST ID"/>
+   <button class="btn" onclick="joinGame()">CONNECT</button>
+   <button class="btn" onclick="showMenu()">BACK</button>
+ </div>
 
-  <div id="game-area" class="game-area" style="display:none;">
-    <div class="player-box" id="myBox">
-      <div class="player-name">YOU (P1)</div>
-      <div id="myStatus" style="font-size:12px; margin-bottom:5px;">KRAV_OS // SPD: 1.0x</div>
-      <div id="timeBarBox"><div id="timeBar"></div></div>
-      <div class="screen" id="myScreen"></div>
-      <div id="myButtons" class="btn-grid"></div>
-    </div>
+ <div id="waiting-screen" style="display:none">
+   YOUR ID:
+   <div id="roomCode" onclick="copyId()"></div>
+ </div>
 
-    <div class="player-box p2">
-      <div class="player-name">RIVAL (P2)</div>
-      <div id="oppStatus" style="font-size:12px; margin-bottom:5px;">CONNECTING...</div>
-      <div class="screen" id="oppScreen">WAITING...</div>
-    </div>
-  </div>
+ <div id="ready-screen" style="display:none">
+   <button class="btn" onclick="setReady()">I'M READY</button>
+ </div>
+
+ <div id="debug">debug...</div>
+</div>
+
+<div id="game-area" class="game-area" style="display:none">
+
+ <div class="player-box" id="myBox">
+   <div id="timeBarBox"><div id="timeBar"></div></div>
+   <div class="screen" id="myScreen"></div>
+   <div id="myButtons" class="btn-grid"></div>
+ </div>
+
+ <div class="player-box p2">
+   <div class="screen" id="oppScreen">WAITING...</div>
+ </div>
+
+</div>
 </div>
 
 <script>
-// ===== AUDIO ENGINE (SYNTH & BEEP) =====
-const ctx = new (window.AudioContext || window.webkitAudioContext)();
-const synth = window.speechSynthesis;
-let musicStarted = false;
-
-function playMusic() {
-    if (musicStarted) return;
-    musicStarted = true;
-    const sequence = [110, 0, 110, 110, 82, 0, 98, 123];
-    let i = 0;
-    setInterval(() => {
-        if (sequence[i] > 0) {
-            const osc = ctx.createOscillator(), g = ctx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.value = sequence[i];
-            g.gain.setValueAtTime(0.08, ctx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
-            osc.connect(g); g.connect(ctx.destination);
-            osc.start(); osc.stop(ctx.currentTime + 0.25);
-        }
-        i = (i + 1) % sequence.length;
-    }, 180);
+// ===== DEBUG LOGGER =====
+function log(t){
+ const d=document.getElementById("debug");
+ d.innerHTML+=t+"<br>"; d.scrollTop=9999;
 }
 
-function speak(text) {
-    if(synth.speaking) synth.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = 1.4; u.pitch = 0.8; u.volume = 1.0;
-    // Try to find a hebrew/english voice
-    const voices = synth.getVoices();
-    u.voice = voices.find(v => v.lang.includes('en-GB')) || voices[0];
-    synth.speak(u);
+// ===== AUDIO =====
+const ctx=new(window.AudioContext||webkitAudioContext)();
+function beep(f){const o=ctx.createOscillator();o.frequency.value=f;o.connect(ctx.destination);o.start();o.stop(ctx.currentTime+.1)}
+
+// ===== PEER SETUP (FIXED) =====
+let peer,conn,isHost=false,myPeerId;
+
+function initPeer(){
+ peer=new Peer({
+   debug:2,
+   config:{iceServers:[{urls:"stun:stun.l.google.com:19302"}]}
+ });
+
+ peer.on("open",id=>{
+   myPeerId=id;
+   setStatus("CONNECTED","connected");
+   log("MY ID: "+id);
+ });
+
+ // LISTENER ALWAYS ACTIVE
+ peer.on("connection",c=>{
+   log("INCOMING CONNECTION");
+   conn=c; setupConnection();
+ });
+
+ peer.on("error",e=>{
+   log("PEER ERR: "+e.type);
+   setStatus("ERROR "+e.type,"disconnected");
+ });
 }
 
-function vibrate() {
-    if(navigator.vibrate) navigator.vibrate(200);
+function setStatus(t,c){const s=document.getElementById("status");s.textContent=t;s.className=c}
+
+// ===== LOBBY =====
+function createGame(){
+ isHost=true;
+ roomCode.textContent=myPeerId;
+ menu.style.display="none";
+ waiting-screen.style.display="block";
+ setStatus("WAITING","waiting");
 }
 
-// ===== PEERJS SETUP =====
-let peer = null, conn = null;
-let isHost = false, myPeerId = null;
-let myReady = false, peerReady = false, rematchRequest = false;
+function joinGame(){
+ const id=peerIdInput.value.trim();
+ conn=peer.connect(id,{reliable:true});
+
+ conn.on("open",()=>{log("CONNECTED TO HOST");setupConnection()});
+ conn.on("error",e=>log("CONN ERR "+e));
+}
+
+function setupConnection(){
+ setStatus("LINKED","connected");
+ lobby.style.display="none";
+ game-area.style.display="flex";
+
+ conn.on("data",handlePeer);
+ conn.on("close",()=>{log("LEFT");location.href="index.html"});
+}
+
+function send(m){if(conn?.open)conn.send(m)}
 
 // ===== GAME STATE =====
-let stage=0, round=1, balbalot=false, lock=false;
-let barTimer=null, barWidth=100;
-let pChoice=null, oChoice=null;
-let suddenActive=false;
+let stage=0,round=1,balbalot=false;
+let pChoice,oChoice;
+let bar,barW;
 
-// ===== TABLES & CONTENT =====
-const SHAME_TASKS = [
-    "Speak with a French accent.",
-    "Text your ex: 'I miss the chaos'.",
-    "Stand on one leg next round.",
-    "Narrate your rival's moves.",
-    "Let rival tweet from your phone.",
-    "10 Squats while maintaining eye contact.",
-    "Bark like a dog.",
-    "Confess your worst habit.",
-    "Do a plank until next round."
-];
+const MOVES=["בונגלו","פיירבול","צונמי","אונייה"];
+const BEATS={בונגלו:"אונייה",פיירבול:"בונגלו",צונמי:"פיירבול",אונייה:"צונמי"};
 
-const MOVES = {
-    NORMAL: [
-        {t: "בונגלו", i: "🏠"}, 
-        {t: "פיירבול", i: "🔥"}, 
-        {t: "צונמי", i: "🌊"}, 
-        {t: "אונייה", i: "🚢"}
-    ],
-    BAL: [
-        {t: "לונגבו", i: "🏠"}, 
-        {t: "פיירדד", i: "🔥"}, 
-        {t: "נוצמי", i: "🌊"}, 
-        {t: "אוווניה", i: "🚢"}
-    ]
-};
-
-const DECOYS = {
-    "מגה קרב": ["מגע קרב", "מגה גרב"],
-    "סופר קרב": ["סופר כרב", "סופר קרפ"],
-    "מגה מגה מגה קרב": ["מגה מגה קרב", "מנה מנה מנה קרב"],
-    "מגה חרב": ["מגע חרב", "מגה גרב"],
-    "סופר חרב": ["סופר כרב", "סופר חרפ"],
-    "מגה מגה מגה חרב": ["מגה מגה חרב", "מנה מנה מנה חרב"],
-    "תיקו תיקו": ["טיקו תיקו", "תיקו תיק"],
-    "פטיבר עמוס": ["פתיבר אמוס", "פטיבר עמוש"]
-};
-
-function getDecoys(word) { return (DECOYS[word] || [word+"X", word+"Y"]).slice(0, 2); }
-function getSpeed() { return 1 + (round - 1) * 0.85; }
-function getShame() { return SHAME_TASKS[Math.floor(Math.random() * SHAME_TASKS.length)]; }
-
-// ===== CORE FUNCTIONS =====
-const $ = id => document.getElementById(id);
-function setStatus(text, cls) { 
-    const s = $('status'); s.textContent = text; s.className = cls; 
+// ===== FLOW =====
+function start(){
+ stage=0;round=1;balbalot=false;
+ next();
 }
 
-function initPeer() {
-    peer = new Peer();
-    peer.on('open', id => { myPeerId = id; setStatus('KRAV_NET // CONNECTED', 'connected'); });
-    peer.on('error', err => { setStatus('ERROR: ' + err.type, 'disconnected'); });
+function next(){
+ log("STAGE "+stage);
+
+ if(stage===0){show("מגה קרב");buttons(["מגה קרב","מגע קרב"]);startBar();stage=1}
+ else if(stage===1){show("סופר קרב");buttons(["סופר קרב","סופר כרב"]);startBar();stage=2}
+ else if(stage===2){show("מגה מגה מגה קרב");buttons(["מגה מגה מגה קרב","מגה מגה קרב"]);startBar();stage=3}
+
+ else if(stage===3){
+   show("ARENA ROUND "+round);
+   buttons(MOVES,true);
+   startBar(120);
+   stage=30;
+ }
+
+ else if(stage===4){
+   show("TEKO TEKO");
+   buttons(["תיקו תיקו","טיקו תיקו"]);
+   startBar();
+   stage=5;
+ }
+
+ else if(stage===5){stage=0;next()}
 }
 
-function createGame() {
-    if(!peer) return;
-    isHost = true;
-    $('menu').style.display = 'none';
-    $('waiting-screen').style.display = 'block';
-    $('roomCode').textContent = myPeerId;
-    setStatus('WAITING FOR CHALLENGER...', 'waiting');
-    
-    peer.on('connection', c => {
-        conn = c; setupConnection();
-    });
+function buttons(a,isMove){
+ myButtons.innerHTML=a.map(t=>
+  `<button class="btn" onclick="press('${t}',${isMove})">${t}</button>`
+ ).join("");
 }
 
-function copyId() {
-    navigator.clipboard.writeText(myPeerId);
-    alert("ID Copied!");
+function show(h){myScreen.innerHTML=h;send({type:"view",h})}
+
+// ===== TIMER =====
+function startBar(ms=80){
+ clearInterval(bar);barW=100;
+ bar=setInterval(()=>{barW-=3;timeBar.style.width=barW+"%";
+   if(barW<=0)shame("SLOW")},ms)
+}
+function stopBar(){clearInterval(bar)}
+
+// ===== INPUT =====
+function press(t,isMove){
+ if(isMove){
+   pChoice=t; send({type:"move",t});
+   checkResolve(); return;
+ }
+
+ // chants
+ if(!isHost){
+   show("WAIT HOST");
+ }else{
+   stage++; send({type:"stage",stage}); next();
+ }
 }
 
-function showJoin() {
-    $('menu').style.display = 'none';
-    $('join-screen').style.display = 'block';
+// ===== RESOLVE =====
+function handlePeer(d){
+ log("MSG "+d.type);
+
+ if(d.type==="view")oppScreen.innerHTML=d.h;
+ if(d.type==="stage"){stage=d.stage;next()}
+ if(d.type==="move"){oChoice=d.t;checkResolve()}
+ if(d.type==="sudden")sudden();
 }
 
-function joinGame() {
-    const id = $('peerIdInput').value.trim();
-    if(!id) return;
-    isHost = false;
-    setStatus('CONNECTING...', 'waiting');
-    conn = peer.connect(id);
-    conn.on('open', () => setupConnection());
-    conn.on('error', () => { setStatus('FAILED', 'disconnected'); showMenu(); });
+function checkResolve(){
+ if(!pChoice||!oChoice)return;
+
+ show("YOU:"+pChoice+"\nRIVAL:"+oChoice);
+
+ setTimeout(()=>{
+   if(BEATS[pChoice]===oChoice) win();
+   else if(BEATS[oChoice]===pChoice) shame("LOSE");
+   else teko();
+ },800);
 }
 
-function showMenu() {
-    $('join-screen').style.display = 'none';
-    $('waiting-screen').style.display = 'none';
-    $('ready-screen').style.display = 'none';
-    $('menu').style.display = 'block';
+function teko(){
+ pChoice=oChoice=null;
+ round++;
+ if(round===3){balbalot=true;myBox.classList.add("balbalot-shake")}
+
+ if(round>=4){send({type:"sudden"});sudden()}
+ else{stage=4;next()}
 }
 
-function backToMenu() { window.location.href = 'index.html'; }
-function cancelHost() { showMenu(); setStatus('CONNECTED', 'connected'); }
-
-function setupConnection() {
-    setStatus('CONNECTED', 'connected');
-    $('join-screen').style.display = 'none';
-    $('waiting-screen').style.display = 'none';
-    $('ready-screen').style.display = 'block';
-    
-    conn.on('data', data => handlePeerMessage(data));
-    conn.on('close', () => onOpponentLeft());
+// ===== ENDINGS =====
+function win(){
+ show("VICTORY");
+ send({type:"lose"});
+ setTimeout(()=>location.href="index.html",2000);
 }
 
-function setReady() {
-    myReady = true;
-    sendToPeer({type: 'READY'});
-    $('ready-screen').innerHTML = '<div style="color:#ffcc00; font-size:24px; margin-top:20px;">WAITING FOR OPPONENT...</div>';
-    checkStart();
+function shame(r){
+ stopBar();
+ show("KORBAN\n"+r);
+ send({type:"win"});
+ setTimeout(()=>location.href="index.html",3000);
 }
 
-function checkStart() {
-    if(myReady && peerReady) {
-        if(isHost) {
-            sendToPeer({type: 'START_GAME'});
-            startMultiplayerGame();
-        }
-    }
+// ===== SUDDEN =====
+function sudden(){
+ show(`<img class="amos-img" src="https://img.mako.co.il/2016/05/26/petiber_i.jpg">
+ עמוס פטיבר!`);
+ buttons(["פטיבר עמוס","פתיבר עמוס"]);
+ stage=100;
 }
 
-function sendToPeer(msg) { if(conn && conn.open) conn.send(msg); }
-
-function handlePeerMessage(data) {
-    if(data.type === 'READY') { peerReady = true; checkStart(); }
-    if(data.type === 'START_GAME') startMultiplayerGame();
-    if(data.type === 'stageUpdate') $('oppScreen').innerHTML = data.html;
-    if(data.type === 'statusUpdate') $('oppStatus').innerText = data.status;
-    if(data.type === 'MOVE') { oChoice = data.move; checkResolve(); }
-    if(data.type === 'NEXT_STAGE') { stage = data.stage; next(); }
-    if(data.type === 'SUDDEN') sudden();
-    if(data.type === 'TEKO') tekoFlash();
-    if(data.type === 'REMATCH') { rematchRequest = true; checkRematch(); }
-    if(data.type === 'win') { showEndMenu(false); } 
-    if(data.type === 'lose') { showEndMenu(true); } 
-}
-
-function onOpponentLeft() {
-    clearInterval(barTimer);
-    show('OPPONENT DISCONNECTED');
-    setStatus('DISCONNECTED', 'disconnected');
-    setTimeout(() => window.location.href = 'index.html', 3000);
-}
-
-// ===== GAME LOGIC =====
-function startMultiplayerGame() {
-    $('lobby').style.display = 'none';
-    $('game-area').style.display = 'flex';
-    stage=0; round=1; balbalot=false; lock=false;
-    pChoice=null; oChoice=null; suddenActive=false;
-    $('myBox').classList.remove('balbalot-shake');
-    
-    if(ctx.state === 'suspended') ctx.resume();
-    playMusic();
-    next();
-}
-
-function show(h) {
-    $('myScreen').innerHTML = h;
-    sendToPeer({type: 'stageUpdate', html: h});
-}
-
-function buttons(arr) {
-    if(lock) return;
-    
-    // DRUNK PHYSICS: Shuffle buttons in Balbalot mode
-    if(balbalot) arr.sort(() => Math.random() - 0.5);
-
-    $('myButtons').innerHTML = arr.map(b => 
-        `<button class='btn' onclick="press('${b.t}',${b.ok},${!!b.move})">
-            ${b.i ? `<div class="emoji">${b.i}</div>` : ''}
-            ${b.t}
-        </button>`
-    ).join("");
-}
-
-function updateStatus() {
-    const speed = getSpeed();
-    const balText = balbalot ? ' !!BAL!!' : '';
-    const txt = `SPD: ${speed.toFixed(1)}x${balText}`;
-    $('myStatus').innerText = txt;
-    sendToPeer({type: 'statusUpdate', status: txt});
-}
-
-function startBar(baseMs) {
-    clearInterval(barTimer); barWidth=100;
-    updateStatus();
-    const speed = getSpeed();
-    const interval = baseMs / speed;
-    barTimer = setInterval(() => {
-        barWidth -= 2; $('timeBar').style.width = barWidth + "%";
-        if(barWidth <= 0) triggerShame("קורבן!", "איטי מדי!");
-    }, interval);
-}
-
-function stopBar() { clearInterval(barTimer); }
-
-function triggerShame(title, msg) {
-    stopBar(); lock=true; vibrate();
-    $('myBox').classList.remove("balbalot-shake");
-    $('myScreen').classList.add("flash-red");
-    
-    const shameTask = getShame();
-    const finalMsg = title === "קורבן!" ? `<div class="shame-desc">${shameTask}</div>` : `<div class="shame-desc">DRINK.</div>`;
-    
-    speak(title); // TTS
-    show(`<div class="shame-text" style="color:${title==='קורבן!'?'#ff0033':'#ffcc00'}">${title}</div>${msg}${finalMsg}`);
-    
-    sendToPeer({type: 'win'}); 
-    setTimeout(() => {
-        $('myScreen').classList.remove("flash-red");
-        showEndMenu(false);
-    }, 4000);
-    stage = -1;
-}
-
-function showEndMenu(won) {
-    lock = false;
-    pChoice = oChoice = null;
-    const html = won ? 
-        `<div style="font-size:30px; color:var(--neon); margin:20px 0;">VICTORY!</div>` :
-        `<div style="font-size:30px; color:var(--danger); margin:20px 0;">DEFEAT!</div>`;
-    
-    if(won) speak("VICTORY");
-
-    $('myButtons').innerHTML = `
-        <div style="grid-column: span 2">
-            ${html}
-            <button class='btn' onclick="requestRematch()">REMATCH</button>
-            <button class='btn' onclick="exitGame()">EXIT</button>
-        </div>
-    `;
-}
-
-function requestRematch() {
-    myReady = true;
-    sendToPeer({type: 'REMATCH'});
-    show('WAITING FOR OPPONENT...');
-    $('myButtons').innerHTML = '';
-    checkRematch();
-}
-
-function checkRematch() {
-    if(myReady && rematchRequest) {
-        myReady = peerReady = rematchRequest = false;
-        startMultiplayerGame();
-    }
-}
-
-function exitGame() { window.location.href = 'index.html'; }
-
-function press(t, ok, isMove) {
-    if(stage === -1) return;
-    if(!ok) {
-        pChoice = 'FAIL';
-        sendToPeer({type: 'MOVE', move: 'FAIL'});
-        triggerShame("קורבן!", "קלט שגוי!");
-        return;
-    }
-
-    if(stage === 100) { // SUDDEN DEATH VICTORY
-        suddenActive = false; stopBar();
-        show(`<div style="font-size:28px; color:var(--neon);">VICTORY!</div>`);
-        sendToPeer({type: 'lose'}); // Opponent loses
-        setTimeout(() => showEndMenu(true), 1000);
-        return;
-    }
-
-    if(isMove) { // COMBAT MOVE
-        stopBar();
-        pChoice = t;
-        sendToPeer({type: 'MOVE', move: t});
-        show('WAITING FOR OPPONENT...');
-        $('myButtons').innerHTML = '';
-        checkResolve();
-        return;
-    }
-
-    // CHANT PHASE LOGIC
-    if(isHost) {
-        stage++;
-        sendToPeer({type: 'NEXT_STAGE', stage});
-        next();
-    } else {
-        stopBar();
-        $('myButtons').innerHTML = '<div style="color:#00ff00; font-size:20px; margin-top:10px; grid-column: span 2;">WAITING FOR HOST...</div>';
-    }
-}
-
-function next() {
-    lock=false;
-    
-    // TTS Trigger
-    if(stage === 4) speak("TEKO TEKO");
-    else if(stage === 1) speak("Mega Krav");
-    
-    if(stage === 0) {
-        const text = balbalot ? "מגה חרב" : "מגה קרב";
-        show(`STAGE 1\n${text}`);
-        buttons([{t:text, ok:true, i:null}, ...getDecoys(text).map(x=>({t:x, ok:false}))]);
-        startBar(80); stage=1;
-    } else if(stage === 1) {
-        const text = balbalot ? "סופר חרב" : "סופר קרב";
-        show(`STAGE 2\n${text}`);
-        buttons([{t:text, ok:true, i:null}, ...getDecoys(text).map(x=>({t:x, ok:false}))]);
-        startBar(80); stage=2;
-    } else if(stage === 2) {
-        const text = balbalot ? "מגה מגה מגה חרב" : "מגה מגה מגה קרב";
-        show(`CHANT!\n${text}`);
-        buttons([{t:text, ok:true, i:null}, ...getDecoys(text).map(x=>({t:x, ok:false}))]);
-        startBar(60); stage=3;
-    } else if(stage === 3) {
-        show(`ROUND ${round}\nGO!!`);
-        const moves = balbalot ? MOVES.BAL : MOVES.NORMAL;
-        buttons(moves.map(m => ({t:m.t, i:m.i, ok:true, move:true})));
-        startBar(120); stage=30;
-    } else if(stage === 4) {
-        show("TEKO TEKO!");
-        buttons([{t:"תיקו תיקו", ok:true}, ...getDecoys("תיקו תיקו").slice(0,1).map(x=>({t:x, ok:false}))]);
-        startBar(80); stage=5;
-    } else if(stage === 5) {
-        stage=0; next();
-    }
-}
-
-function checkResolve() {
-    if(pChoice && oChoice) {
-        // FAIL CHECK
-        if(pChoice === 'FAIL' || oChoice === 'FAIL') {
-            if(pChoice === 'FAIL') triggerShame("קורבן!", "נכשלת!");
-            else { show("OPPONENT FAILED!"); setTimeout(() => showEndMenu(true), 1500); }
-            return;
-        }
-
-        // RPS LOGIC
-        const list = balbalot ? MOVES.BAL : MOVES.NORMAL;
-        const wins = [[list[0].t, list[3].t], [list[1].t, list[0].t], [list[2].t, list[1].t], [list[3].t, list[2].t]];
-        const pW = wins.some(p => p[0] === pChoice && p[1] === oChoice);
-        const cW = wins.some(p => p[0] === oChoice && p[1] === pChoice);
-        
-        show(`YOU: ${pChoice}\nRIVAL: ${oChoice}`);
-        
-        setTimeout(() => {
-            if(pW) {
-                show(`<div style="font-size:28px; color:var(--neon);">ROUND WIN!</div>`);
-                speak("WINNER");
-                sendToPeer({type: 'lose'}); 
-                setTimeout(() => showEndMenu(true), 1000);
-            } else if(cW) {
-                triggerShame("מפסידן!", "הובסת בקרב!");
-            } else {
-                // TEKO
-                pChoice = oChoice = null;
-                round++;
-                if(round === 3) { balbalot = true; $('myBox').classList.add("balbalot-shake"); }
-                
-                if(round >= 4) {
-                    if(isHost) sendToPeer({type: 'SUDDEN'});
-                    sudden();
-                } else {
-                    if(isHost) sendToPeer({type: 'TEKO'});
-                    tekoFlash();
-                }
-            }
-        }, 1000);
-    }
-}
-
-function tekoFlash() {
-    $('myScreen').classList.add("flash-yellow");
-    speak("TEKO TEKO");
-    setTimeout(() => {
-        $('myScreen').classList.remove("flash-yellow");
-        stage = 4;
-        if(isHost) next();
-    }, 800);
-}
-
-function sudden() {
-    show(`<img src="https://img.mako.co.il/2016/05/26/petiber_i.jpg" class="amos-img">\nAMMOS PETIBER\nעמוס פטיבר!`);
-    speak("AMOS PETIBER");
-    suddenActive=true;
-    setTimeout(()=>{ 
-        if(suddenActive) { suddenActive=false; triggerShame("מפסידן!", "עמוס שתה אותך!"); }
-    }, 1300);
-    buttons([{t:"פטיבר עמוס", ok:true}, ...getDecoys("פטיבר עמוס").slice(0,1).map(x=>({t:x, ok:false}))]);
-    stage=100;
-}
-
+// ===== START =====
 initPeer();
 </script>
 </body>
