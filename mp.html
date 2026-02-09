@@ -3,361 +3,259 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
-<title>MEGA KRAV MULTI</title>
-
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-
+<title>MEGA KRAV: DEBUGGED</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
-body{
- background:#000;
- color:#33ff33;
- font-family:'Courier New',monospace;
- margin:0;
- text-transform:uppercase;
- display:flex;
- flex-direction:column;
- align-items:center;
-}
-
-.btn{
- width:90%;
- margin:6px;
- padding:14px;
- background:#002200;
- color:#33ff33;
- border:2px solid #33ff33;
- font-size:18px;
-}
-
-#timeWrap{
- width:90%;
- border:2px solid #33ff33;
- margin:6px;
- height:18px;
-}
-
-#timeBar{
- width:100%;
- height:100%;
- background:#33ff33;
- transition:width .1s linear;
-}
-
-#game-area{
- display:none;
- flex-direction:column;
- width:100%;
- align-items:center;
-}
-
-#debug{
- width:90%;
- height:120px;
- background:#001100;
- border:1px solid #33ff33;
- overflow:auto;
- font-size:10px;
- margin-top:6px;
-}
-
-.box{
- border:2px solid #33ff33;
- width:90%;
- margin:6px;
- padding:6px;
- text-align:center;
-}
-
-.balbalot-shake{
- animation:sh 0.15s infinite;
-}
-@keyframes sh{
- 0%{transform:translate(0,0)}
- 25%{transform:translate(2px,-1px)}
- 50%{transform:translate(-2px,1px)}
- 75%{transform:translate(1px,2px)}
- 100%{transform:translate(0,0)}
-}
+    :root { --neon: #39ff14; --bg: #050a05; --p2: #ff33ff; }
+    body { background: #000; color: var(--neon); font-family: 'Courier New', monospace; margin: 0; text-align: center; text-transform: uppercase; overflow-x: hidden; }
+    #ui-layer { padding: 20px; max-width: 500px; margin: auto; }
+    .box { border: 2px solid var(--neon); background: var(--bg); padding: 15px; margin: 10px 0; position: relative; }
+    .btn { width: 100%; padding: 15px; margin: 5px 0; background: #002200; color: var(--neon); border: 2px solid var(--neon); font-size: 1.2rem; cursor: pointer; font-weight: bold; }
+    .btn:active { background: var(--neon); color: #000; }
+    #timeWrap { width: 100%; height: 10px; background: #111; margin: 10px 0; border: 1px solid var(--neon); }
+    #timeBar { width: 100%; height: 100%; background: var(--neon); transition: width 0.1s linear; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .shaking { animation: shake 0.2s infinite; border-color: red !important; }
+    @keyframes shake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, -2px); } 100% { transform: translate(0,0); } }
+    #debug-console { font-size: 10px; color: #666; height: 50px; overflow: auto; text-align: left; border: 1px solid #222; margin-top: 20px; }
 </style>
 </head>
-
 <body>
 
-<h2>MULTI MEGA KRAV</h2>
+<div id="ui-layer">
+    <h2>MEGA KRAV MULTI</h2>
 
-<div id="lobby" class="box">
+    <div id="lobby" class="box">
+        <div id="setup-btns">
+            <button class="btn" id="hostBtn" onclick="initPeer(true)" disabled>HOST (WAITING...)</button>
+            <button class="btn" onclick="showJoin()">JOIN GAME</button>
+        </div>
+        
+        <div id="join-ui" style="display:none">
+            <input id="peerIdInput" class="btn" style="background:#000" placeholder="ENTER CODE"/>
+            <button class="btn" onclick="initPeer(false)">CONNECT</button>
+        </div>
 
-<div id="menu">
- <button class="btn" onclick="createGame()">HOST GAME</button>
- <button class="btn" onclick="document.getElementById('join-screen').style.display='block'">JOIN GAME</button>
-</div>
+        <div id="waiting-ui" style="display:none">
+            <p>YOUR CODE:</p>
+            <h1 id="displayId" style="color:#fff; letter-spacing: 2px;">----</h1>
+            <p>WAITING FOR PLAYER 2...</p>
+        </div>
+    </div>
 
-<div id="join-screen" style="display:none">
- <input id="peerIdInput" class="btn" placeholder="ENTER CODE"/>
- <button class="btn" onclick="joinGame()">CONNECT</button>
- <button class="btn" onclick="showMenu()">BACK</button>
-</div>
+    <div id="game-area" style="display:none">
+        <div class="box" style="border-color: var(--p2); font-size: 14px; color: var(--p2);">
+            RIVAL: <span id="oppScreen">WAITING...</span>
+        </div>
 
-<div id="waiting-screen" style="display:none">
- YOUR CODE:
- <div id="roomCode"></div>
- WAITING PLAYER...
-</div>
+        <div id="myBox" class="box">
+            <div id="screen" style="font-size: 24px; min-height: 60px; display: flex; align-items: center; justify-content: center;">READY?</div>
+            <div id="timeWrap"><div id="timeBar"></div></div>
+            <div id="btn-container"></div>
+        </div>
+        
+        <button class="btn" onclick="rageQuit()" style="font-size: 12px; border-color: #444; color: #444;">QUIT = קורבן</button>
+    </div>
 
-<div id="status">OFFLINE</div>
-</div>
-
-<!-- GAME AREA -->
-<div id="game-area">
-
- <div id="oppBox" class="box">
-   <div id="oppScreen">RIVAL</div>
- </div>
-
- <div id="myBox" class="box">
-   <div id="myScreen">READY</div>
-
-   <div id="timeWrap">
-     <div id="timeBar"></div>
-   </div>
-
-   <div id="myButtons"></div>
- </div>
-
- <button class="btn" onclick="rageQuit()">QUIT = קורבן</button>
-
- <div id="debug"></div>
+    <div id="debug-console"></div>
 </div>
 
 <script>
-// ===== DEBUG =====
-function log(t){
- const d=document.getElementById("debug");
- d.innerHTML+=t+"<br>";
- d.scrollTop=9999;
+let peer, conn;
+let isHost = false;
+let stage = 0, round = 1, balbalot = false;
+let myMove = null, oppMove = null;
+let barInt;
+
+const LOG = (msg) => {
+    const d = document.getElementById('debug-console');
+    d.innerHTML += `> ${msg}<br>`;
+    d.scrollTop = d.scrollHeight;
+};
+
+// 1. NETWORK LAYER
+const peerConfig = { debug: 1 };
+peer = new Peer(peerConfig);
+
+peer.on('open', (id) => {
+    document.getElementById('hostBtn').disabled = false;
+    document.getElementById('hostBtn').innerText = "HOST GAME";
+    window.myId = id;
+    LOG("Network Ready: " + id);
+});
+
+function showJoin() {
+    document.getElementById('setup-btns').style.display = 'none';
+    document.getElementById('join-ui').style.display = 'block';
 }
 
-// expose for onclick
-window.press=press;
-window.createGame=createGame;
-window.joinGame=joinGame;
-window.showMenu=showMenu;
-window.rageQuit=rageQuit;
-
-// ===== PEER =====
-let peer,conn,isHost=false,myPeerId;
-
-function initPeer(){
- peer=new Peer({debug:2});
-
- peer.on("open",id=>{
-   myPeerId=id;
-   log("MY ID "+id);
- });
-
- peer.on("connection",c=>{
-   conn=c;
-   setupConnection();
- });
+function initPeer(asHost) {
+    isHost = asHost;
+    if (isHost) {
+        document.getElementById('displayId').innerText = window.myId;
+        document.getElementById('setup-btns').style.display = 'none';
+        document.getElementById('waiting-ui').style.display = 'block';
+        
+        peer.on('connection', (c) => {
+            conn = c;
+            setupConn();
+        });
+    } else {
+        const targetId = document.getElementById('peerIdInput').value.trim();
+        conn = peer.connect(targetId);
+        conn.on('open', setupConn);
+    }
 }
 
-function createGame(){
- isHost=true;
- document.getElementById("roomCode").textContent=myPeerId;
-
- document.getElementById("menu").style.display="none";
- document.getElementById("waiting-screen").style.display="block";
+function setupConn() {
+    LOG("Connected!");
+    document.getElementById('lobby').style.display = 'none';
+    document.getElementById('game-area').style.display = 'block';
+    
+    conn.on('data', handleData);
+    if (isHost) setTimeout(() => runStage(0), 1000);
 }
 
-function joinGame(){
- const id=document.getElementById("peerIdInput").value.trim();
- conn=peer.connect(id);
- conn.on("open",setupConnection);
+function send(type, data = {}) {
+    if (conn && conn.open) conn.send({ type, ...data });
 }
 
-function showMenu(){
- document.getElementById("join-screen").style.display="none";
- document.getElementById("menu").style.display="block";
+// 2. GAME ENGINE
+const MOVES = ["בונגלו", "פיירבול", "צונמי", "אונייה"];
+const BEATS = { "בונגלו": "אונייה", "פיירבול": "בונגלו", "צונמי": "פיירבול", "אונייה": "צונמי" };
+
+function runStage(s) {
+    stage = s;
+    myMove = null; oppMove = null;
+    let config = { text: "", btns: [], time: 80 };
+
+    if (s === 0) config = { text: "מגה קרב", btns: ["מגה קרב", "מגע קרב"] };
+    else if (s === 1) config = { text: "סופר קרב", btns: ["סופר קרב", "סופר כרב"] };
+    else if (s === 2) config = { text: "מגה מגה מגה קרב", btns: ["מגה מגה מגה קרב", "מגה מגה קרב"] };
+    else if (s === 3) {
+        config = { text: `ARENA RD ${round}`, btns: MOVES, time: 120, isArena: true };
+    }
+    else if (s === 4) config = { text: "תיקו תיקו", btns: ["תיקו תיקו", "טיקו טיקו"] };
+    else if (s === 100) config = { text: "עמוס פטיבר!", btns: ["פטיבר עמוס", "פתיבר עמוס"], time: 40 };
+
+    updateUI(config);
+    send("SYNC_STAGE", config);
+    startTimer(config.time);
 }
 
-function setupConnection(){
- document.getElementById("lobby").style.display="none";
- document.getElementById("game-area").style.display="flex";
+function updateUI(cfg) {
+    document.getElementById('screen').innerText = cfg.text;
+    const container = document.getElementById('btn-container');
+    container.innerHTML = "";
+    container.className = cfg.isArena ? "grid" : "";
 
- conn.on("data",handlePeer);
- start();
+    let btnList = [...cfg.btns];
+    if (balbalot) btnList.sort(() => Math.random() - 0.5);
+
+    btnList.forEach(txt => {
+        const b = document.createElement('button');
+        b.className = 'btn';
+        b.innerText = txt;
+        b.onclick = () => handleInput(txt, cfg);
+        container.appendChild(b);
+    });
 }
 
-function send(m){ if(conn?.open) conn.send(m); }
-
-// ===== GAME =====
-let stage=0,round=1,balbalot=false;
-let pChoice=null,oChoice=null;
-let bar,barW;
-
-const MOVES=["בונגלו","פיירבול","צונמי","אונייה"];
-const BEATS={בונגלו:"אונייה",פיירבול:"בונגלו",צונמי:"פיירבול",אונייה:"צונמי"};
-
-// ===== FLOW =====
-function start(){ stage=0; round=1; balbalot=false; next(); }
-
-function next(){
- log("STAGE "+stage);
-
- if(stage===0){
-   show("מגה קרב");
-   buttons(["מגה קרב","מגע קרב"]);
-   startBar(); stage=1;
- }
-
- else if(stage===1){
-   show("סופר קרב");
-   buttons(["סופר קרב","סופר כרב"]);
-   startBar(); stage=2;
- }
-
- else if(stage===2){
-   show("מגה מגה מגה קרב");
-   buttons(["מגה מגה מגה קרב","מגה מגה קרב"]);
-   startBar(); stage=3;
- }
-
- else if(stage===3){
-   show("ARENA ROUND "+round);
-   buttons(MOVES,true);
-   startBar(120); stage=30;
- }
-
- else if(stage===4){
-   show("תיקו תיקו");
-   buttons(["תיקו תיקו","טיקו טיקו"]);
-   startBar(); stage=5;
- }
-
- else if(stage===5){ stage=0; next(); }
+function handleInput(val, cfg) {
+    // Stage Chants (0, 1, 2, 4, 100)
+    if (!cfg.isArena) {
+        if (val === cfg.text) {
+            if (isHost) {
+                if (stage === 4) runStage(3); // From Teko back to Arena
+                else if (stage === 100) runStage(100); // Loop sudden death until someone fails
+                else runStage(stage + 1);
+            }
+        } else {
+            shame("WRONG MOVE");
+        }
+    } 
+    // Arena Logic
+    else {
+        myMove = val;
+        document.getElementById('btn-container').innerHTML = "<h3>LOCKED IN...</h3>";
+        send("MOVE", { move: val });
+        checkWinner();
+    }
 }
 
-function buttons(arr,isMove=false){
- const box=document.getElementById("myButtons");
-
- box.innerHTML=arr.map(t=>
-  `<button class="btn" onclick="press('${t}',${isMove})">${t}</button>`
- ).join("");
+function handleData(data) {
+    if (data.type === "SYNC_STAGE") {
+        updateUI(data);
+        startTimer(data.time);
+    }
+    if (data.type === "MOVE") {
+        oppMove = data.move;
+        document.getElementById('oppScreen').innerText = "LOCKED";
+        checkWinner();
+    }
+    if (data.type === "RAGE") shame("RIVAL FLED");
+    if (data.type === "SHAME") shame("YOU LOST");
 }
 
-function show(h){
- document.getElementById("myScreen").innerHTML=h;
- send({type:"view",h});
+function checkWinner() {
+    if (!myMove || !oppMove) return;
+    stopTimer();
+    
+    document.getElementById('screen').innerHTML = `${myMove} vs ${oppMove}`;
+    
+    setTimeout(() => {
+        if (BEATS[myMove] === oppMove) {
+            send("SHAME");
+            win();
+        } else if (BEATS[oppMove] === myMove) {
+            shame("LOSE");
+        } else {
+            round++;
+            if (round === 3) {
+                balbalot = true;
+                document.getElementById('myBox').classList.add('shaking');
+            }
+            if (round >= 4) { if(isHost) runStage(100); }
+            else { if(isHost) runStage(4); }
+        }
+    }, 1000);
 }
 
-// ===== TIMER =====
-function startBar(ms=80){
- clearInterval(bar);
- barW=100;
-
- bar=setInterval(()=>{
-   barW-=3;
-   document.getElementById("timeBar").style.width=barW+"%";
-
-   if(barW<=0) shame("SLOW");
- },ms);
+// 3. UTILS
+function startTimer(speed) {
+    stopTimer();
+    let w = 100;
+    barInt = setInterval(() => {
+        w -= 2;
+        document.getElementById('timeBar').style.width = w + "%";
+        if (w <= 0) { stopTimer(); shame("TOO SLOW"); }
+    }, speed);
 }
 
-function stopBar(){ clearInterval(bar); }
+function stopTimer() { clearInterval(barInt); }
 
-// ===== INPUT =====
-function press(t,isMove){
- log("PRESS "+t);
-
- if(isMove){
-   pChoice=t;
-   send({type:"move",t});
-   checkResolve();
-   return;
- }
-
- if(isHost){
-   stage++;
-   send({type:"stage",stage});
-   next();
- }
+function shame(reason) {
+    stopTimer();
+    document.getElementById('screen').innerHTML = `קורבן!!!<br>${reason}`;
+    send("VIEW", { txt: "I AM KORBAN" });
+    setTimeout(() => resetSession(), 4000);
 }
 
-// ===== PEER =====
-function handlePeer(d){
- log("MSG "+d.type);
-
- if(d.type==="view")
-   document.getElementById("oppScreen").innerHTML=d.h;
-
- if(d.type==="stage"){ stage=d.stage; next(); }
-
- if(d.type==="move"){ oChoice=d.t; checkResolve(); }
-
- if(d.type==="sudden") sudden();
-
- if(d.type==="rage"){
-   show("האויב קורבן וברח!");
-   setTimeout(()=>location.href="index.html",2500);
- }
+function win() {
+    document.getElementById('screen').innerHTML = `מפצח!!!<br>DRINK!`;
+    setTimeout(() => resetSession(), 4000);
 }
 
-// ===== RESOLVE =====
-function checkResolve(){
- if(!pChoice||!oChoice) return;
-
- show("YOU:"+pChoice+"<br>RIVAL:"+oChoice);
-
- setTimeout(()=>{
-   if(BEATS[pChoice]===oChoice) win();
-   else if(BEATS[oChoice]===pChoice) shame("LOSE");
-   else teko();
- },700);
+function resetSession() {
+    round = 1; stage = 0; balbalot = false;
+    document.getElementById('myBox').classList.remove('shaking');
+    if (isHost) runStage(0);
 }
 
-function teko(){
- pChoice=oChoice=null;
- round++;
-
- if(round===3){
-   balbalot=true;
-   document.getElementById("myBox").classList.add("balbalot-shake");
- }
-
- if(round>=4){
-   send({type:"sudden"});
-   sudden();
- }
- else{ stage=4; next(); }
+function rageQuit() {
+    send("RAGE");
+    shame("RAGE QUIT");
 }
-
-// ===== ENDINGS =====
-function win(){
- show("מפצח! אתה ניצחת<br>פקודה: DRINK!");
- setTimeout(()=>location.href="index.html",3000);
-}
-
-function shame(r){
- stopBar();
- show("קורבן!!!<br>פקודה: MAKE STUPID MISSION");
- setTimeout(()=>location.href="index.html",3500);
-}
-
-function rageQuit(){
- send({type:"rage"});
- shame("RAGE QUIT");
-}
-
-// ===== SUDDEN =====
-function sudden(){
- show("עמוס פטיבר!");
- buttons(["פטיבר עמוס","פתיבר עמוס"]);
- stage=100;
-}
-
-// ===== START =====
-initPeer();
 </script>
-
 </body>
 </html>
